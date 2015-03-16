@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{e36f76a8-f65c-4afd-b039-29b35d29dae4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{8a95b459-523c-4aa7-b2d5-0dee1be89b08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{61856a5b-3a54-45de-a597-99e3d9a759db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{c3c0dcf7-d204-4ca3-9adb-b94d6ad90237}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Builds\shapes_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Builds\shapes_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Builds\terrain_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Builds\terrain_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Framework\main.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Framework\MyController.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Renderer\MyView.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\External\src\SceneModel\Camera.cpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\External\src\SceneModel\Context.cpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\External\src\tgl\tgl.c">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\External\src\tygra\FileHelper.cpp">
+      <Filter>External</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\External\src\tygra\Window.cpp">
+      <Filter>External</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Framework\MyController.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\MyView.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\External\src\SceneModel\FirstPersonMovement.hpp">
+      <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\External\include\SceneModel\Camera.hpp">
+      <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\External\include\SceneModel\Context.hpp">
+      <Filter>External</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
