@@ -7,59 +7,53 @@
 
 class MyView : public tygra::WindowViewDelegate
 {
-public:
+    public:
 
-    MyView();
+        MyView();
 
-    ~MyView();
+        ~MyView();
 
-    void
-    setScene(std::shared_ptr<const SceneModel::Context> scene);
+        void setScene(std::shared_ptr<const SceneModel::Context> scene);
 
-    void
-    toggleShading();
+        void toggleShading();
 
-private:
+    private:
 
-    void
-    windowViewWillStart(std::shared_ptr<tygra::Window> window) override;
+        void windowViewWillStart (std::shared_ptr<tygra::Window> window) override;
 
-    void
-    windowViewDidReset(std::shared_ptr<tygra::Window> window,
-                       int width,
-                       int height) override;
+        void windowViewDidReset (std::shared_ptr<tygra::Window> window, int width, int height) override;
 
-    void
-    windowViewDidStop(std::shared_ptr<tygra::Window> window) override;
+        void windowViewDidStop (std::shared_ptr<tygra::Window> window) override;
 
-    void
-    windowViewRender(std::shared_ptr<tygra::Window> window) override;
+        void windowViewRender (std::shared_ptr<tygra::Window> window) override;
 
-private:
+        void frameworkLoading();
 
-    std::shared_ptr<const SceneModel::Context> scene_;
+    private:
 
-    GLuint terrain_sp_{ 0 };
-    GLuint shapes_sp_{ 0 };
+        std::shared_ptr<const SceneModel::Context> scene_;
 
-    bool shade_normals_{ false };
+        GLuint terrain_sp_{ 0 };
+        GLuint shapes_sp_{ 0 };
 
-    struct MeshGL
-    {
-        GLuint position_vbo{ 0 };
-        GLuint element_vbo{ 0 };
-        GLuint vao{ 0 };
-        int element_count{ 0 };
-    };
-    MeshGL terrain_mesh_;
+        bool shade_normals_{ false };
 
-    enum
-    {
-        kVertexPosition = 0,
-        kVertexNormal = 1,
-    };
+        struct MeshGL
+        {
+            GLuint position_vbo{ 0 };
+            GLuint element_vbo{ 0 };
+            GLuint vao{ 0 };
+            int element_count{ 0 };
+        };
+        MeshGL terrain_mesh_;
 
-	GLuint cube_vao_{ 0 };
-	GLuint cube_vbo_{ 0 };
+        enum
+        {
+            kVertexPosition = 0,
+            kVertexNormal = 1,
+        };
+
+	    GLuint cube_vao_{ 0 };
+	    GLuint cube_vbo_{ 0 };
 
 };
