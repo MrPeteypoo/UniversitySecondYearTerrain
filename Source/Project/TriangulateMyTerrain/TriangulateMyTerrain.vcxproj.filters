@@ -29,9 +29,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Framework\main.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Framework\MyController.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
@@ -53,6 +50,7 @@
     <ClCompile Include="..\..\..\External\src\tygra\Window.cpp">
       <Filter>External</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\MyController.hpp">

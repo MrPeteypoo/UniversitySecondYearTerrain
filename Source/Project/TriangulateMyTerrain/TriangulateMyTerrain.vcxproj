@@ -118,7 +118,7 @@
     <ClCompile Include="..\..\..\External\src\tgl\tgl.c" />
     <ClCompile Include="..\..\..\External\src\tygra\FileHelper.cpp" />
     <ClCompile Include="..\..\..\External\src\tygra\Window.cpp" />
-    <ClCompile Include="..\..\Framework\main.cpp" />
+    <ClCompile Include="..\..\main.cpp" />
     <ClCompile Include="..\..\Framework\MyController.cpp" />
     <ClCompile Include="..\..\Renderer\MyView.cpp" />
   </ItemGroup>

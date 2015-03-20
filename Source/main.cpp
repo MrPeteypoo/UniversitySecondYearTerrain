@@ -1,7 +1,7 @@
 #include <crtdbg.h>
 #include <cstdlib>
 
-#include "MyController.hpp"
+#include <Framework/MyController.hpp>
 #include <tygra/Window.hpp>
 
 int main(int argc, char *argv[])
