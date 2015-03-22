@@ -120,14 +120,23 @@
     <ClCompile Include="..\..\..\External\src\tygra\Window.cpp" />
     <ClCompile Include="..\..\main.cpp" />
     <ClCompile Include="..\..\Framework\MyController.cpp" />
+    <ClCompile Include="..\..\Renderer\Mesh.cpp" />
+    <ClCompile Include="..\..\Renderer\MeshPool.cpp" />
     <ClCompile Include="..\..\Renderer\MyView.cpp" />
+    <ClCompile Include="..\..\Renderer\PoolSegment.cpp" />
+    <ClCompile Include="..\..\Renderer\Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\External\include\SceneModel\Camera.hpp" />
     <ClInclude Include="..\..\..\External\include\SceneModel\Context.hpp" />
     <ClInclude Include="..\..\..\External\src\SceneModel\FirstPersonMovement.hpp" />
     <ClInclude Include="..\..\Framework\MyController.hpp" />
+    <ClInclude Include="..\..\Utility\Rectangle.hpp" />
+    <ClInclude Include="..\..\Renderer\Mesh.hpp" />
+    <ClInclude Include="..\..\Renderer\MeshPool.hpp" />
     <ClInclude Include="..\..\Renderer\MyView.hpp" />
+    <ClInclude Include="..\..\Renderer\Terrain.hpp" />
+    <ClInclude Include="..\..\Renderer\PoolSegment.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

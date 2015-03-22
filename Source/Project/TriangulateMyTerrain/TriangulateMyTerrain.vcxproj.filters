@@ -13,6 +13,12 @@
     <Filter Include="External">
       <UniqueIdentifier>{c3c0dcf7-d204-4ca3-9adb-b94d6ad90237}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{0f9fc0c7-5bce-4e6a-bf7f-5b9bac564cc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{b5a8c4a1-1664-426d-bd8f-52d321dcc0b7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Builds\shapes_fs.glsl">
@@ -51,6 +57,18 @@
       <Filter>External</Filter>
     </ClCompile>
     <ClCompile Include="..\..\main.cpp" />
+    <ClCompile Include="..\..\Renderer\Terrain.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Renderer\Mesh.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Renderer\MeshPool.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Renderer\PoolSegment.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\MyController.hpp">
@@ -67,6 +85,21 @@
     </ClInclude>
     <ClInclude Include="..\..\..\External\include\SceneModel\Context.hpp">
       <Filter>External</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\Terrain.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\PoolSegment.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\MeshPool.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\Mesh.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\Rectangle.hpp">
+      <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

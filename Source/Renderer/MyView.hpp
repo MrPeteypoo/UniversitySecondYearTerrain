@@ -1,11 +1,12 @@
-#pragma once
+#ifndef MY_VIEW_GL_HPP
+#define MY_VIEW_GL_HPP
 
 
 #include <SceneModel/Context.hpp>
 #include <tygra/WindowViewDelegate.hpp>
 #include <tgl/tgl.h>
 #include <glm/glm.hpp>
-
+#include <Renderer/Terrain.hpp>
 
 
 /// <summary>
@@ -100,3 +101,5 @@ class MyView final : public tygra::WindowViewDelegate
         std::shared_ptr<const SceneModel::Context>  m_scene         { nullptr };    //!< A poiner to the context used for camera information when rendering the scene.
 
 };
+
+#endif
