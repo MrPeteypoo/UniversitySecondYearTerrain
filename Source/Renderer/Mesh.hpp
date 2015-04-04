@@ -25,7 +25,7 @@ struct Mesh final
     // Constructors and destructor //
     /////////////////////////////////
 
-    /// <summary> Construct a mesh with the given values. </summary>
+    /// <summary> Construct a Mesh with the given values. </summary>
     /// <param name="firstVertex"> The index of a VBO where the vertices for the mesh begin. </param>
     /// <param name="elementsOffset"> An offset in bytes used to draw the mesh in the scene. </param>
     /// <param name="elementCount"> Indicates how many elements in the elements buffer define the mesh. </param>
