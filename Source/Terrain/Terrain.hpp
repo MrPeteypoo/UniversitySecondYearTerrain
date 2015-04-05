@@ -60,8 +60,15 @@ class Terrain final
         /// <returns> Whether the terrain was successfully built. </returns>
         void buildFromHeightMap (const HeightMap& heightMap, const unsigned int upscaledWidth = 0, const unsigned int upscaledDepth = 0);
 
+        /// <summary> Prepares the terrain for renderering by initialising it with an OpenGL program. </summary>
+        /// <param name="program"> The program to use when preparing the terrain. </param>
+        void prepareForRender (const GLuint program);
+
         /// <summary> Delete any allocated memory. </summary>
         void cleanUp();
+
+        /// <summary> Draw the terrain bro! </summary>
+        void draw();
 
     private:
 
@@ -104,6 +111,7 @@ class Terrain final
         /// <param name="xOffset"> The initial elements to start at, this provides an offset to all values generated. </param>
         /// <param name="width"> How many vertices wide the patch is. </param>
         /// <param name="height"> How many vertices deep the patch is. </param>
+        /// <param name="startMirror"> Indicates whether the algorithm should start with mirror mode turned on or off. </param>
         void addElements (std::vector<unsigned int>& elements, const unsigned int initial, const unsigned int width, const unsigned int depth);
 
         ///////////////////

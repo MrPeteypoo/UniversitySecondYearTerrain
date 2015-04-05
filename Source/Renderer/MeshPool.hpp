@@ -68,6 +68,10 @@ class MeshPool final
         /// <summary> Deletes the buffers and VAO associated with the MeshPool </summary>
         void clear();
 
+        /// <summary> Initialises the VAO ready for renderering. </summary>
+        /// <param name="program"> The program to obtain attribute location from. </param>
+        void initialiseVAO (const GLuint program);
+
         /// <summary> Fills the desired buffer with the given data. This will completely wipe the previous contents. </summary>
         /// <param name="buffer"> The buffer to fill with data. </param>
         /// <param name="data"> A pointer to the data to fill the buffer with. This can be a nullptr. </param>

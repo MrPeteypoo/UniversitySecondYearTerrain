@@ -51,7 +51,7 @@ Terrain::~Terrain()
 void Terrain::setDivisor (const unsigned int divisor)
 {
     // Don't allow silly values.
-    assert (divisor != 0);
+    assert (divisor > 1);
 
     m_divisor = divisor;
 }
@@ -76,8 +76,27 @@ void Terrain::buildFromHeightMap (const HeightMap& heightMap, const unsigned int
 }
 
 
+void Terrain::prepareForRender (const GLuint program)
+{
+    // Pass on our best regards to the MeshPool.
+    m_pool.initialiseVAO (program);
+}
+
+
+void Terrain::draw()
+{
+    glBindVertexArray (m_pool.getVAO());
+
+    for (const auto& mesh : m_patches)
+    {
+        glDrawElementsBaseVertex (GL_TRIANGLES, mesh.elementCount, GL_UNSIGNED_INT, (GLuint*) mesh.elementsOffset, mesh.firstVertex);
+    }
+}
+
+
 void Terrain::cleanUp()
 {
+    // Put that memory away!
     m_pool.clear();
     m_patches.clear();
 }
@@ -89,8 +108,8 @@ void Terrain::cleanUp()
 
 void Terrain::generateVertices (const HeightMap& heightMap, const unsigned int width, const unsigned int depth)
 {
-    // Don't allow something stupid like width || depth == 1.
-    assert (width != 1 && depth != 1);
+    // Don't allow something stupid like width || depth <= 1.
+    assert (width > 1 && depth > 1);
 
     // Obtain the correct divisor so we can segment the terrain properly.
     const auto divisor = determineDivisor (width, depth);
@@ -118,51 +137,52 @@ void Terrain::generateVertices (const HeightMap& heightMap, const unsigned int w
     GLuint elementsOffset { 0 };
 
     // We're going to need three loops, one is updates the Mesh vector and the other two create the vertices.
-    for (auto i = 0U; i < meshTotal; ++i)
+    for (auto zTile = 0U; zTile < tileDepth; ++zTile)
     {
-        // We need the vertex offsets so can we get the obtain the correct data from the height map.
-        const auto xTile   = i % tileWidth,
-                   zTile   = i / tileDepth,
-                   xOffset = xTile * divisor,
-                   zOffset = zTile * divisor;
-
-        // Make sure we don't cause access violation errors by checking if we're using an oddly sized heightmap providing remainders.
-        const auto patchWidth = widthRemainder > 0 && xTile == (tileWidth - 1) ? widthRemainder : divisor,
-                   patchDepth = depthRemainder > 0 && zTile == (tileDepth - 1) ? depthRemainder : divisor;
-
-        // Cache the values which end the loops so we don't calculate them every time.
-        const auto widthEnd = xOffset + patchWidth,
-                   depthEnd = zOffset + patchDepth;
-
-        for (auto z = zOffset; z < depthEnd; ++z)
+        for (auto xTile = 0U; xTile < tileWidth; ++xTile)
         {
-            for (auto x = xOffset; x < widthEnd; ++x)
+            // We need the vertex offsets so can we get the obtain the correct data from the height map.
+            const auto xOffset = xTile * divisor,
+                       zOffset = zTile * divisor;
+
+            // Make sure we don't cause access violation errors by checking if we're using an oddly sized heightmap providing remainders.
+            const auto patchWidth = widthRemainder > 0 && xTile == (tileWidth - 1) ? widthRemainder : divisor,
+                       patchDepth = depthRemainder > 0 && zTile == (tileDepth - 1) ? depthRemainder : divisor;
+
+            // Cache the values which end the loops so we don't calculate them every time.
+            const auto widthEnd = xOffset + patchWidth,
+                       depthEnd = zOffset + patchDepth;
+
+            for (auto z = zOffset; z < depthEnd; ++z)
             {
-                /*// Obtain the necessary UV co-ordinates to create the vertex. 
-                const auto u = (float) x / width,
-                           v = (float) z / depth;
+                for (auto x = xOffset; x < widthEnd; ++x)
+                {
+                    /*// Obtain the necessary UV co-ordinates to create the vertex. 
+                    const auto u = (float) x / width,
+                               v = (float) z / depth;
 
-                addVertex (vertices, heightMap, u, v);*/
-                vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
+                    addVertex (vertices, heightMap, u, v);*/
+                    vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
+                }
             }
+
+            // Before we create the patch we need the elements array.
+            addElements (elements, (unsigned int) firstVertex, patchWidth, patchDepth);
+
+            // Add the data to the GPU.
+            m_pool.fillSection (BufferType::Vertices, vertices.data(), vertices.size() * sizeof (Vertex), firstVertex * sizeof (Vertex));
+            m_pool.fillSection (BufferType::Elements, elements.data(), elements.size() * sizeof (unsigned int), elementsOffset);
+
+            // Now construct the mesh.
+            m_patches.emplace_back (firstVertex, elementsOffset, elements.size());
+
+            // Increment everything captain!
+            firstVertex    += vertices.size();
+            elementsOffset += elements.size() * sizeof (unsigned int);
+
+            vertices.clear();
+            elements.clear();
         }
-
-        // Before we create the patch we need the elements array.
-        addElements (elements, (unsigned int) firstVertex, patchWidth, patchDepth);
-
-        // Add the data to the GPU.
-        m_pool.fillSection (BufferType::Vertices, vertices.data(), vertices.size() * sizeof (Vertex), firstVertex * sizeof (Vertex));
-        m_pool.fillSection (BufferType::Elements, elements.data(), elements.size() * sizeof (unsigned int), elementsOffset);
-
-        // Now construct the mesh.
-        m_patches.emplace_back (firstVertex, elementsOffset, elements.size());
-
-        // Increment everything captain!
-        firstVertex    += vertices.size();
-        elementsOffset += elements.size() * sizeof (unsigned int);
-
-        vertices.clear();
-        elements.clear();
     }
 }
 
@@ -238,9 +258,9 @@ void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned i
     // Create a function which creates the upper |/ && |\ triangle.
     const auto upperTriangle = [&elements] (const unsigned int current, const unsigned int width, const bool mirror)
     {
-        const auto triangleEnd = mirror ? current : current + 1;
+        const auto triangleEnd = mirror ? current + 1 : current;
 
-        elements.push_back (current + 1 + width);
+        elements.push_back (current + width + 1);
         elements.push_back (current + width);
         elements.push_back (triangleEnd);
     };
@@ -249,7 +269,8 @@ void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned i
     bool mirror = false;
 
     // Prevent overflow by reducing the width and depth by one.
-    const auto endWidth = width - 1, endDepth = depth - 1;
+    const auto endWidth = width - 1,
+               endDepth = depth - 1;
 
     // Create a quad at a time.
     for (auto z = 0U; z < endDepth; ++z)
@@ -257,7 +278,7 @@ void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned i
         for (auto x = 0U; x < endWidth; ++x)
         {
             // Calculate the current vertex.
-            const auto vertex = initial + x + z * width;
+            const auto vertex = initial + (x + z * width);
             
             lowerTriangle (vertex, width, mirror);
             upperTriangle (vertex, width, mirror);

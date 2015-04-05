@@ -25,9 +25,8 @@ class HeightMap final
         /// Constructs a HeightMap object from an image file. 
         /// </summary>
         /// <param name="file"> The file location of the image to load. </param>
-        /// <param name="maxHeight"> The scalar value to be used when reading height values. 1 == maxHeight, 0.5 == maxHeight / 2. </param>
-        /// <param name="pixelToUnitScale"> How many pixels make up a single world unit? This effects how large it appears in game. </param>
-        HeightMap (const std::string& file, const float maxHeight, const float pixelToWorldScale);
+        /// <param name="worldScale"> The dimensions of the final terrain. </param>
+        HeightMap (const std::string& file, const glm::vec3& worldScale);
 
         HeightMap (HeightMap&& move);
         HeightMap& operator= (HeightMap&& move);
@@ -68,10 +67,9 @@ class HeightMap final
 
         /// <summary> Attempts to load the height map from a new file. If the file is invalid no data will be lost. </summary>
         /// <param name="file"> The file location to load from. </param>
-        /// <param name="maxHeight"> The scalar value to be used when reading height values. 1 == maxHeight, 0.5 == maxHeight / 2. </param>
-        /// <param name="pixelToUnitScale"> How many pixels make up a single world unit? This effects how large it appears in game. </param>
+        /// <param name="worldScale"> The dimensions of the final terrain. </param>
         /// <returns> Whether the load was successful or not. </returns>
-        bool loadFromPNG (const std::string& file, const float maxHeight, const float pixelToWorldScale);
+        bool loadFromPNG (const std::string& file, const glm::vec3& worldScale);
 
     private:
 

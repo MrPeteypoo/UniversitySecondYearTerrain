@@ -15,9 +15,9 @@
 // Constructors //
 //////////////////
 
-HeightMap::HeightMap (const std::string& file, const float maxHeight, const float pixelToWorldScale)
+HeightMap::HeightMap (const std::string& file, const glm::vec3& worldScale)
 {
-    if (!loadFromPNG (file, maxHeight, pixelToWorldScale))
+    if (!loadFromPNG (file, worldScale))
     {
         throw std::invalid_argument ("HeightMap::HeightMap(), unable to load from the given file location: \"" + file + "\"");
     }
@@ -75,10 +75,10 @@ const glm::vec3& HeightMap::getPoint (const size_t index) const
 }
 
 
-bool HeightMap::loadFromPNG (const std::string& file, const float maxHeight, const float pixelToWorldScale)
+bool HeightMap::loadFromPNG (const std::string& file, const glm::vec3& worldScale)
 {
     // Ensure valid parameters!
-    assert (pixelToWorldScale != 0.f);
+    assert (worldScale.x != 0.f && worldScale.y != 0.f && worldScale.z != 0.f);
 
     // Load the height map, we only handle 8-bit per colour (256 possible values).
     const auto heightMap = tygra::imageFromPNG (file);
@@ -89,13 +89,13 @@ bool HeightMap::loadFromPNG (const std::string& file, const float maxHeight, con
         m_width  = heightMap.width();
         m_height = heightMap.height();
 
-        m_data.resize (m_width * m_height);
+        m_data.reserve (m_width * m_height);
 
         // Create the heightmap from the image data.
         auto       image    = (const uint8_t*) heightMap.pixels();
 
-        const auto channels = heightMap.componentsPerPixel();
-        const auto maxValue = 255.f * channels;
+        const auto channels  = heightMap.componentsPerPixel();
+        const auto maxValues = glm::vec3 (m_width - 1, 255.f * channels, m_height - 1);
                                 
         for (auto z = 0U; z < m_height; ++z)
         {
@@ -106,17 +106,29 @@ bool HeightMap::loadFromPNG (const std::string& file, const float maxHeight, con
 
                 for (auto i = 0U; i < channels; ++i)
                 {
-                    accumlator += image[i];
+                    // Ideally this would use every channel in the image but unfortunately the ICA would have me place
+                    // a silly if statement here so that we only obtain the red channel.
+                    if (i == 0)
+                    {
+                        accumlator += *image;
+                        accumlator *= channels;
+                    }
+
+                    // Ideal solution here:
+                    // accumlator += *image;
+                    ++image;
                 }
 
-                // Put it all together and you get the world position!
-                const auto height   = maxHeight * (accumlator / maxValue);
+                // Normalise the X, Y and Z values to get scaled co-ordinates.
+                const auto coordinates = glm::vec3 (x          / maxValues.x,
+                                                    accumlator / maxValues.y,
+                                                    z          / maxValues.z);
 
-                const auto position = glm::vec3 (x / pixelToWorldScale, height, z / pixelToWorldScale);
+                // Put it all together and you get the world position!
+                const auto position = coordinates * worldScale;
 
                 // Update the internal data and increment the pointer.
-                m_data[x + z * m_width] = position;
-                ++image;
+                m_data.push_back (position);
             }
         }
 

@@ -11,6 +11,10 @@
 #include <tgl/tgl.h>
 
 
+// Personal headers.
+#include <Renderer/Vertex.hpp>
+
+
 /////////////////////////////////
 // Constructors and destructor //
 /////////////////////////////////
@@ -72,6 +76,36 @@ void MeshPool::clear()
     glDeleteVertexArrays (1, &m_vao);
     glDeleteBuffers (1, &m_vertices);
     glDeleteBuffers (1, &m_elements);
+}
+
+
+void MeshPool::initialiseVAO (const GLuint program)
+{
+    // Obtain the attribute pointer locations we'll be using to construct the VAO.
+    GLint position { glGetAttribLocation (program, "vertex_position") },
+          normal   { glGetAttribLocation (program, "vertex_normal") };
+
+    // Initialise the VAO.
+    glBindVertexArray (m_vao);
+
+    // Bind the element buffer to the VAO.
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, m_elements);
+
+    // Enable each attribute pointer.
+    glEnableVertexAttribArray (position);
+    glEnableVertexAttribArray (normal);
+
+    // Begin creating the vertex attribute pointer from the interleaved buffer.
+    glBindBuffer (GL_ARRAY_BUFFER, m_vertices);
+
+    // Set the properties of each attribute pointer.
+    glVertexAttribPointer (position, 3, GL_FLOAT, GL_FALSE, sizeof (Vertex), TGL_BUFFER_OFFSET (0));
+    glVertexAttribPointer (normal,   3, GL_FLOAT, GL_FALSE, sizeof (Vertex), TGL_BUFFER_OFFSET (12));
+
+    // Unbind all buffers.
+    glBindVertexArray (0);
+    glBindBuffer (GL_ARRAY_BUFFER, 0);
+    glBindBuffer (GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 
