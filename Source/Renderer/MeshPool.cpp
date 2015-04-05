@@ -109,7 +109,7 @@ void MeshPool::initialiseVAO (const GLuint program)
 }
 
 
-void MeshPool::fillData (const BufferType buffer, const void* const data, const size_t size)
+void MeshPool::fillData (const BufferType buffer, const size_t size, const void* const data)
 {
     // Simply allocate the data using glBindBuffer.
     const auto bufferData = [=] (const GLuint buffer, const GLenum target)
@@ -130,7 +130,7 @@ void MeshPool::fillData (const BufferType buffer, const void* const data, const 
 }
 
 
-void MeshPool::fillSection (const BufferType buffer, const void* const data, const size_t size, const GLint offset)
+void MeshPool::fillSection (const BufferType buffer, const GLint offset, const size_t size, const void* const data)
 {
     // Use glBufferSubData to overwrite some existing memory.
     const auto bufferSubData = [=] (const GLuint buffer, const GLenum target)

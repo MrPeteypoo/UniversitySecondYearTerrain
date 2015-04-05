@@ -108,11 +108,11 @@ class Terrain final
 
         /// <summary> Uses an algorithm to calculate the element index of a particular patch which are added to the given vector. </summary>
         /// <param name="elements"> The vector to add the elements to. </param>
-        /// <param name="xOffset"> The initial elements to start at, this provides an offset to all values generated. </param>
         /// <param name="width"> How many vertices wide the patch is. </param>
         /// <param name="height"> How many vertices deep the patch is. </param>
         /// <param name="startMirror"> Indicates whether the algorithm should start with mirror mode turned on or off. </param>
-        void addElements (std::vector<unsigned int>& elements, const unsigned int initial, const unsigned int width, const unsigned int depth);
+        void addElements (std::vector<unsigned int>& elements, const unsigned int width, const unsigned int depth);
+
 
         ///////////////////
         // Internal data //

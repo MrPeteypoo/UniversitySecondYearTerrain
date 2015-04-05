@@ -167,18 +167,20 @@ void Terrain::generateVertices (const HeightMap& heightMap, const unsigned int w
             }
 
             // Before we create the patch we need the elements array.
-            addElements (elements, (unsigned int) firstVertex, patchWidth, patchDepth);
+            addElements (elements, patchWidth, patchDepth);
 
             // Add the data to the GPU.
-            m_pool.fillSection (BufferType::Vertices, vertices.data(), vertices.size() * sizeof (Vertex), firstVertex * sizeof (Vertex));
-            m_pool.fillSection (BufferType::Elements, elements.data(), elements.size() * sizeof (unsigned int), elementsOffset);
+            const auto verticesSize = vertices.size() * sizeof (Vertex),
+                       elementsSize = elements.size() * sizeof (unsigned int);
+
+            m_pool.fillSection (BufferType::Vertices, firstVertex * sizeof (Vertex), verticesSize, vertices.data());
+            m_pool.fillSection (BufferType::Elements, elementsOffset, elementsSize, elements.data());
 
             // Now construct the mesh.
             m_patches.emplace_back (firstVertex, elementsOffset, elements.size());
 
             // Increment everything captain!
             firstVertex    += vertices.size();
-            elementsOffset += elements.size() * sizeof (unsigned int);
 
             vertices.clear();
             elements.clear();
@@ -231,12 +233,12 @@ void Terrain::allocateGPUMemory (const unsigned int width, const unsigned int de
                elementsSize  = elementCount * sizeof (unsigned int);
 
     // Finally allocate the memory.
-    m_pool.fillData (BufferType::Vertices, nullptr, verticesSize);
-    m_pool.fillData (BufferType::Elements, nullptr, elementsSize);
+    m_pool.fillData (BufferType::Vertices, verticesSize, nullptr);
+    m_pool.fillData (BufferType::Elements, elementsSize, nullptr);
 }
 
 
-void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned int initial, const unsigned int width, const unsigned int depth)
+void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned int width, const unsigned int depth)
 {
     /// We create an alternating square pattern for efficiency. It should look as shown below.
     /// 
@@ -278,7 +280,7 @@ void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned i
         for (auto x = 0U; x < endWidth; ++x)
         {
             // Calculate the current vertex.
-            const auto vertex = initial + (x + z * width);
+            const auto vertex = x + z * width;
             
             lowerTriangle (vertex, width, mirror);
             upperTriangle (vertex, width, mirror);

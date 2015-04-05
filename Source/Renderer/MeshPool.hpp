@@ -74,16 +74,16 @@ class MeshPool final
 
         /// <summary> Fills the desired buffer with the given data. This will completely wipe the previous contents. </summary>
         /// <param name="buffer"> The buffer to fill with data. </param>
-        /// <param name="data"> A pointer to the data to fill the buffer with. This can be a nullptr. </param>
         /// <param name="size"> The amount of data to allocate in bytes. </param>
-        void fillData (const BufferType buffer, const void* const data, const size_t size);
+        /// <param name="data"> A pointer to the data to fill the buffer with. This can be a nullptr. </param>
+        void fillData (const BufferType buffer, const size_t size, const void* const data);
 
         /// <summary> Fills a section of the desired buffer with the given data. This will not allocate memory. </summary>
         /// <param name="buffer"> The buffer to modify. </param>
-        /// <param name="data"> A pointer to the data to fill the section with. This cannot be a nullptr. </param>
-        /// <param name="size"> How many bytes to copy from the data. </param>
         /// <param name="offset"> The starting offset of the buffer to copy data to. </param>
-        void fillSection (const BufferType buffer, const void* const data, const size_t size, const GLint offset);
+        /// <param name="size"> How many bytes to copy from the data. </param>
+        /// <param name="data"> A pointer to the data to fill the section with. This cannot be a nullptr. </param>
+        void fillSection (const BufferType buffer, const GLint offset, const size_t size, const void* const data);
 
     private:
 
