@@ -177,7 +177,7 @@ void MyView::terrainLoading()
 
     const HeightMap heightMap { file, height, scale };
 
-    m_terrain.buildFromHeightMap (heightMap, width, depth);    
+    m_terrain.buildFromHeightMap (heightMap, 0, 0);    
 }
 
 

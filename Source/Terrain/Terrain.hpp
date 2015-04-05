@@ -13,6 +13,7 @@
 
 // Forward decalarations.
 class HeightMap;
+struct Vertex;
 
 
 /// <summary>
@@ -48,9 +49,9 @@ class Terrain final
         void setDivisor (const unsigned int divisor);
 
         
-        //////////////
-        // Creation //
-        //////////////
+        //////////////////////
+        // Public interface //
+        //////////////////////
 
         /// <summary> Attempt to build the terrain from a given height map. </summary>
         /// <param name="heightMap"> The height map data to load from. </param>
@@ -58,11 +59,6 @@ class Terrain final
         /// <param name="upscaledDepth"> How many vertices deep the final terrain should be, leave this at 0 to avoid upscaling the depth. </param>
         /// <returns> Whether the terrain was successfully built. </returns>
         void buildFromHeightMap (const HeightMap& heightMap, const unsigned int upscaledWidth = 0, const unsigned int upscaledDepth = 0);
-
-
-        /////////////
-        // Cleanup //
-        /////////////
 
         /// <summary> Delete any allocated memory. </summary>
         void cleanUp();
@@ -79,15 +75,36 @@ class Terrain final
         /// <param name="depth"> The desired number of vertices deep to generate. </param>
         void generateVertices (const HeightMap& heightMap, const unsigned int width, const unsigned int depth);
 
-        /// <summary> Generates the element array buffer of the terrain from the given dimensions. </summary>
-        /// <param name="width"> How many vertices wide the terrain is. </param>
-        /// <param name="height"> How many vertices deep the terrain is. </param>
-        void generateElements (const unsigned int width, const unsigned int depth);
+        /// <summary> Determines a valid divisor to use based on the given dimensions. </summary>
+        /// <param name="width"> The desired width of the terrain. </param>
+        /// <param name="height"> The desired height of the terrain. </param>
+        /// <returns> A valid divisor value which won't exceed the terrain dimensions. </returns>
+        unsigned int determineDivisor (const unsigned int width, const unsigned int depth) const;
 
-        /// <summary> Determines a valid divisor to use based on the given height map. </summary>
-        /// <param name="heightMap"> The height map containing the dimensions to check against. </param>
-        /// <returns> A valid divisor value which won't exceed the height maps dimensions. </returns>
-        unsigned int determineDivisor (const HeightMap& heightMap) const;
+        /// <summary> Allocates enough memory in the given vectors to begin constructing each terrain patch. </summary>
+        /// <param name="vertices"> The Vertex vector to reserve capacity for. </param>
+        /// <param name="elements"> The elements vector to reserve capacity for. </param>
+        /// <param name="divisor"> The divisor value to use when reserving capacity. </param>
+        void allocateLocalMemory (std::vector<Vertex>& vertices, std::vector<unsigned int>& elements, const unsigned int divisor);
+
+        /// <summary> Allocates enough memory in the GPU for the upscaled terrain according to the dimensions given. </summary>
+        /// <param name="width"> How many vertices wide is the terrain? </param>
+        /// <param name="depth"> How many vertices deep is the terrain? </param>
+        void allocateGPUMemory (const unsigned int width, const unsigned int depth);
+
+        /// <summary> Adds a calculated vertex to the given vector from the U and V values passed. </summary>
+        /// <param name="vector"> The vector to contain the new Vertex. </param>
+        /// <param name="heightMap"> The height map containing desired vertex data. </param>
+        /// <param name="u"> A 0 to 1 co-ordinate on the X axis where the vertex should be. </param>
+        /// <param name="v"> A 0 to 1 co-ordinate on the Z axis where the vertex should be. </param>
+        void addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap, const float u, const float v);
+
+        /// <summary> Uses an algorithm to calculate the element index of a particular patch which are added to the given vector. </summary>
+        /// <param name="elements"> The vector to add the elements to. </param>
+        /// <param name="xOffset"> The initial elements to start at, this provides an offset to all values generated. </param>
+        /// <param name="width"> How many vertices wide the patch is. </param>
+        /// <param name="height"> How many vertices deep the patch is. </param>
+        void addElements (std::vector<unsigned int>& elements, const unsigned int initial, const unsigned int width, const unsigned int depth);
 
         ///////////////////
         // Internal data //

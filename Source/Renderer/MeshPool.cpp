@@ -3,6 +3,7 @@
 
 // STL headers.
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 
@@ -82,6 +83,13 @@ void MeshPool::fillData (const BufferType buffer, const void* const data, const 
         glBindBuffer (target, buffer);
         glBufferData (target, size, data, GL_STATIC_DRAW);
         glBindBuffer (target, 0);
+
+        // Ensure we have the allocated memory.
+        if (glGetError() == GL_OUT_OF_MEMORY)
+        {
+            throw std::runtime_error ("MeshPool()::fillData(), unable to allocate " + std::to_string (size) + 
+                                      " bytes of data.");
+        }
     };
 
     performBufferOperation (buffer, bufferData);
