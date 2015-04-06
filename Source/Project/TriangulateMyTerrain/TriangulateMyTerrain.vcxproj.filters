@@ -76,6 +76,9 @@
     <ClCompile Include="..\..\Renderer\Vertex.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\MyController.hpp">
@@ -111,6 +114,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Renderer\Vertex.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp">
+      <Filter>Terrain</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

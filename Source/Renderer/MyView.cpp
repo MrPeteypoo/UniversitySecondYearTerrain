@@ -181,7 +181,7 @@ void MyView::terrainLoading()
     const HeightMap heightMap { file, scale };
 
     // Build the terrain and get it ready for rendering.
-    m_terrain.setDivisor (8);
+    m_terrain.setDivisor (64);
     m_terrain.buildFromHeightMap (heightMap, 0, 0);
     m_terrain.prepareForRender (m_terrainShader);
 }

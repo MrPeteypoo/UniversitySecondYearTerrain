@@ -127,6 +127,7 @@
     <ClCompile Include="..\..\Renderer\Vertex.cpp" />
     <ClCompile Include="..\..\Terrain\HeightMap.cpp" />
     <ClCompile Include="..\..\Terrain\Terrain.cpp" />
+    <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\External\include\SceneModel\Camera.hpp" />
@@ -136,6 +137,7 @@
     <ClInclude Include="..\..\Renderer\Vertex.hpp" />
     <ClInclude Include="..\..\Terrain\HeightMap.hpp" />
     <ClInclude Include="..\..\Terrain\Terrain.hpp" />
+    <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp" />
     <ClInclude Include="..\..\Utility\Rectangle.hpp" />
     <ClInclude Include="..\..\Renderer\Mesh.hpp" />
     <ClInclude Include="..\..\Renderer\MeshPool.hpp" />

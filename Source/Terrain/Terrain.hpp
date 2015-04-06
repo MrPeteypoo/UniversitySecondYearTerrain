@@ -3,6 +3,7 @@
 
 
 // STL headers.
+#include <array>
 #include <vector>
 
 
@@ -60,45 +61,124 @@ class Terrain final
         /// <returns> Whether the terrain was successfully built. </returns>
         void buildFromHeightMap (const HeightMap& heightMap, const unsigned int upscaledWidth = 0, const unsigned int upscaledDepth = 0);
 
+        /// <summary> Delete any allocated memory. </summary>
+        void cleanUp();
+
         /// <summary> Prepares the terrain for renderering by initialising it with an OpenGL program. </summary>
         /// <param name="program"> The program to use when preparing the terrain. </param>
         void prepareForRender (const GLuint program);
-
-        /// <summary> Delete any allocated memory. </summary>
-        void cleanUp();
 
         /// <summary> Draw the terrain bro! </summary>
         void draw();
 
     private:
 
+        //////////////////////////
+        // Member classes/enums //
+        //////////////////////////
+
+        class ConstructionData;
+
+        /// <summary>
+        /// Contains the index for use in the m_meshTemplates array to obtain the correct element count and offset data.
+        /// </summary>
+        enum class MeshTemplate : unsigned int
+        {
+            Central,        //!< Normal terrain patches.
+            TopRow,         //!< Patches on the top-most row.
+            RightColumn,    //!< Patches on the right-most column.
+            TopRightCorner, //!< The top-right corner patch.
+            Count           //!< How many templates exist. NEVER MOVE THIS! IT MUST ALWAYS BE LAST!
+        };
+
+        /// <summary>
+        /// Indicates how the stitching function should process the data given.
+        /// </summary>
+        enum class StitchingMode : int
+        {
+            XAxis,  //!< Stitch the X axis together.
+            ZAxis,  //!< Stitch the Z axis together.
+            Corner  //!< Fill in the missing corner.
+        };
+
+        
         //////////////
         // Creation //
         //////////////
 
-        /// <summary> Generates the vertices of the terrain from a height map. </summary>
-        /// <param name="heightMap"> The height map containing necessary data for the terrain generation. </param>
-        /// <param name="width"> The desired number of vertices wide to generate. </param>
-        /// <param name="depth"> The desired number of vertices deep to generate. </param>
-        void generateVertices (const HeightMap& heightMap, const unsigned int width, const unsigned int depth);
-
         /// <summary> Determines a valid divisor to use based on the given dimensions. </summary>
         /// <param name="width"> The desired width of the terrain. </param>
-        /// <param name="height"> The desired height of the terrain. </param>
+        /// <param name="depth"> The desired depth of the terrain. </param>
         /// <returns> A valid divisor value which won't exceed the terrain dimensions. </returns>
         unsigned int determineDivisor (const unsigned int width, const unsigned int depth) const;
 
-        /// <summary> Allocates enough memory in the given vectors to begin constructing each terrain patch. </summary>
-        /// <param name="vertices"> The Vertex vector to reserve capacity for. </param>
-        /// <param name="elements"> The elements vector to reserve capacity for. </param>
-        /// <param name="divisor"> The divisor value to use when reserving capacity. </param>
-        void allocateLocalMemory (std::vector<Vertex>& vertices, std::vector<unsigned int>& elements, const unsigned int divisor);
+        /// <summary> Allocates enough memory in the GPU for the upscaled terrain according to the data given. </summary>
+        /// <param name="data"> Contains the data required to allocate enough memory for the terrain. </param>
+        void allocateGPUMemory (const ConstructionData& data);
 
-        /// <summary> Allocates enough memory in the GPU for the upscaled terrain according to the dimensions given. </summary>
-        /// <param name="width"> How many vertices wide is the terrain? </param>
-        /// <param name="depth"> How many vertices deep is the terrain? </param>
-        void allocateGPUMemory (const unsigned int width, const unsigned int depth);
 
+        //////////////////////
+        // Element creation //
+        //////////////////////
+        
+        /// <summary> Generates the elements data required for the terrain and loads it into the GPU. </summary>
+        /// <param name="data"> The data required to create the correct element data. </param>
+        void generateElements (const ConstructionData& data);
+
+        /// <summary> Calculates the element array required to render an entire patch of terrain. </summary>
+        /// <param name="elements"> The vector to add the elements to. </param>
+        /// <param name="width"> How many vertices wide the patch is. </param>
+        /// <param name="height"> How many vertices deep the patch is. </param>
+        void addElements (std::vector<unsigned int>& elements, const unsigned int width, const unsigned int depth);
+
+        /// <summary> Add supplementary stitching to the list of elements to ensure the terrain joins correctly. </summary>
+        /// <param name="elements"> The vector to add the elements to. </param>
+        /// <param name="data"> The data required for the stitching to calculate required values for. </param>
+        /// <param name="length"> How much long the stitching should be. </param>
+        /// <param name="mode"> Determines what type of stitching will be performed. </param>
+        void addStitching (std::vector<unsigned int>& elements, const ConstructionData& data, const unsigned int length, const StitchingMode mode);
+
+        /// <summary> Creates a triangular pattern out of the given dimensions and incrementation values which is added to the given vector. </summary>
+        /// <param name="elements"> The elements vector to add to. </param>
+        /// <param name="offset"> The starting offset of every element. </param>
+        /// <param name="width"> How many elements wide the pattern should be. </param>
+        /// <param name="depth"> How many elements deep the pattern should be. </param>
+        /// <param name="increment"> How much to increment by to obtain an element to the right. </param>
+        /// <param name="lineIncrement"> How much to increment by to reach the element directly above. </param>
+        /// <param name="startMirrored"> Whether the triangle pattern should start mirrored or not. </param>
+        void triangleAlgorithm (std::vector<unsigned int>& elements, const unsigned int offset, const unsigned int width, const unsigned int depth, 
+                                                                     const unsigned int increment, const unsigned int lineIncrement,
+                                                                     const bool startMirrored = false);
+
+        /// <summary> Adds the elements to the given vector which create a /| or \| triangle depending on the mirror flag. </summary>
+        /// <param name="elements"> The vector to modify. </param>
+        /// <param name="current"> The starting element number. </param>
+        /// <param name="increment"> How much to increment by to reach the adjacent element. </param>
+        /// <param name="width"> How much to apply when attempting to move up a row of elements. </param>
+        /// <param name="mirror"> Whether the /| triangle should be mirror to become a \| triangle. </param>
+        void lowerTriangle (std::vector<unsigned int>& elements, const unsigned int current, const unsigned int increment, 
+                                                                 const unsigned int width, const bool mirror);
+
+        /// <summary> Adds the elements to the given vector which create a |/ or |\ triangle depending on the mirror flag. </summary>
+        /// <param name="elements"> The vector to modify. </param>
+        /// <param name="current"> The starting element number. </param>
+        /// <param name="increment"> How much to increment by to reach the adjacent element. </param>
+        /// <param name="width"> How much apply when attempting to move up a row of elements. </param>
+        /// <param name="mirror"> Whether the |/ triangle should be mirror to become a |\ triangle. </param>
+        void upperTriangle (std::vector<unsigned int>& elements, const unsigned int current, const unsigned int increment, 
+                                                                 const unsigned int width, const bool mirror);
+        
+
+        ///////////////////////
+        // Vertices creation //
+        ///////////////////////
+
+        /// <summary> Generates the vertices of the terrain from a height map. </summary>
+        /// <param name="heightMap"> The height map containing necessary data for the terrain generation. </param>
+        /// <param name="data"> The data required to construct the terrain to specific dimensions. </param>
+        void generateVertices (const HeightMap& heightMap, const ConstructionData& data);
+
+        
         /// <summary> Adds a calculated vertex to the given vector from the U and V values passed. </summary>
         /// <param name="vector"> The vector to contain the new Vertex. </param>
         /// <param name="heightMap"> The height map containing desired vertex data. </param>
@@ -106,22 +186,28 @@ class Terrain final
         /// <param name="v"> A 0 to 1 co-ordinate on the Z axis where the vertex should be. </param>
         void addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap, const float u, const float v);
 
-        /// <summary> Uses an algorithm to calculate the element index of a particular patch which are added to the given vector. </summary>
-        /// <param name="elements"> The vector to add the elements to. </param>
-        /// <param name="width"> How many vertices wide the patch is. </param>
-        /// <param name="height"> How many vertices deep the patch is. </param>
-        /// <param name="startMirror"> Indicates whether the algorithm should start with mirror mode turned on or off. </param>
-        void addElements (std::vector<unsigned int>& elements, const unsigned int width, const unsigned int depth);
-
+        /// <summary> Obtains the index of the template to use for a mesh with the given properties. </summary>
+        /// <param name="isLastMeshX"> Is the mesh the last mesh on the X axis? </param>
+        /// <param name="isLastMeshZ"> Is the mesh the last mesh on the Z axis? </param>
+        /// <returns> An index value. </returns>
+        size_t templateIndex (const bool isLastMeshX, const bool isLastMeshZ) const;
 
         ///////////////////
         // Internal data //
         ///////////////////
 
-        MeshPool            m_pool              { };        //!< A pool to store the entire generated terrain inside.
-        std::vector<Mesh>   m_patches           { };        //!< A collection of patches which make up the entire terrain.
+        /// <summary>
+        /// Contains the element count and offset required by the four unique terain patch types. The types are central,
+        /// top, right and top right. Each requires unique element data to stitch the terrain together.
+        /// </summary>
+        using MeshTemplates = std::array<Mesh, (size_t) MeshTemplate::Count>;
 
-        unsigned int        m_divisor           { 256 };    //!< The maximum number of vertices wide/deep of each terrain patch.
+
+        MeshPool            m_pool          { };        //!< A pool to store the entire generated terrain inside.
+        std::vector<Mesh>   m_patches       { };        //!< A collection of patches which make up the entire terrain.
+        MeshTemplates       m_meshTemplates { };        //!< Each Mesh has the element offset and count required for the four patch types.
+
+        unsigned int        m_divisor       { 256 };    //!< The maximum number of vertices wide/deep of each terrain patch.
 };
 
 #endif
