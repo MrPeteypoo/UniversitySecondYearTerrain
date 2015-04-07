@@ -37,7 +37,7 @@ namespace util
                             bernsteinTangentJ  = CubicBezier::bernstein (j, v, CubicBezier::Derivative::First);
                                     
                 // The formula for position is: += (Pij * Bi(u) * Bj(v)).
-                position += point * (bernsteinPositionI * bernsteinPositionJ);
+                position += point * bernsteinPositionI * bernsteinPositionJ;
            
                 // The partial derivative of u is: += (Pij * B'i(u) * Bj(v)).
                 partialU += point * bernsteinTangentI * bernsteinPositionJ;
