@@ -68,7 +68,7 @@
     <ClCompile Include="..\..\Utility\ElementCreation.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Utility\CubicBezierSurface.cpp">
+    <ClCompile Include="..\..\Utility\BezierSurface.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,7 +116,10 @@
     <ClInclude Include="..\..\Utility\CubicBezier.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Utility\CubicBezierSurface.hpp">
+    <ClInclude Include="..\..\Utility\QuadraticBezier.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\BezierSurface.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>

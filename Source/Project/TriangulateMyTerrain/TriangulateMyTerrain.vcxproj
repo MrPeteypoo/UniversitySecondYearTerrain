@@ -122,7 +122,7 @@
     <ClCompile Include="..\..\Terrain\HeightMap.cpp" />
     <ClCompile Include="..\..\Terrain\Terrain.cpp" />
     <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp" />
-    <ClCompile Include="..\..\Utility\CubicBezierSurface.cpp" />
+    <ClCompile Include="..\..\Utility\BezierSurface.cpp" />
     <ClCompile Include="..\..\Utility\ElementCreation.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -135,8 +135,9 @@
     <ClInclude Include="..\..\Terrain\Terrain.hpp" />
     <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp" />
     <ClInclude Include="..\..\Utility\CubicBezier.hpp" />
-    <ClInclude Include="..\..\Utility\CubicBezierSurface.hpp" />
+    <ClInclude Include="..\..\Utility\BezierSurface.hpp" />
     <ClInclude Include="..\..\Utility\ElementCreation.hpp" />
+    <ClInclude Include="..\..\Utility\QuadraticBezier.hpp" />
     <ClInclude Include="..\..\Utility\Rectangle.hpp" />
     <ClInclude Include="..\..\Renderer\Mesh.hpp" />
     <ClInclude Include="..\..\Renderer\MeshPool.hpp" />

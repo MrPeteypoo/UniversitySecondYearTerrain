@@ -1,21 +1,21 @@
-#include "CubicBezierSurface.hpp"
+#include "BezierSurface.hpp"
 
 
 // Personal headers.
 #include <Utility/CubicBezier.hpp>
+#include <Utility/QuadraticBezier.hpp>
 
 
 
 namespace util
 {
-    Vertex CubicBezierSurface::calculatePoint (const std::vector<glm::vec3>& controlPoints, const float u, const float v)
+    Vertex BezierSurface::calculatePoint (const std::vector<glm::vec3>& controlPoints, const float u, const float v, const BezierAlgorithm mode)
     {
-        // We must have a four by four grid of control points.
-        assert (controlPoints.size() == 16);
+        // We must have a valid sized grid.
+        const auto width  = (unsigned int) mode,
+                   height = (unsigned int) mode;
 
-        // The dimensions of the grid are four by four.
-        const auto width  = 4,
-                   height = 4;
+        assert (controlPoints.size() == width * height);
 
         // We need to accumlate the position and two partial differentiated tangent vectors to calculate the final vertex.
         glm::vec3 position { 0 },
@@ -29,6 +29,12 @@ namespace util
             {
                 // Obtain the control point we're currently using.
                 const auto& point = controlPoints[i + j * width];
+                
+                /*// Calculate the Bernstein polynominals required.
+                const auto  bernsteinPositionI = QuadraticBezier::bernstein (i, u),
+                            bernsteinPositionJ = QuadraticBezier::bernstein (j, v),
+                            bernsteinTangentI  = QuadraticBezier::bernstein (i, u, QuadraticBezier::Derivative::First),
+                            bernsteinTangentJ  = QuadraticBezier::bernstein (j, v, QuadraticBezier::Derivative::First);*/
 
                 // Calculate the Bernstein polynominals required.
                 const auto  bernsteinPositionI = CubicBezier::bernstein (i, u),

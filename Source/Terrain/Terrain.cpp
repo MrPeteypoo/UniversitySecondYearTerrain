@@ -15,7 +15,7 @@
 #include <Terrain/HeightMap.hpp>
 #include <Terrain/TerrainConstructionData.hpp>
 #include <Utility/ElementCreation.hpp>
-#include <Utility/CubicBezierSurface.hpp>
+#include <Utility/BezierSurface.hpp>
 
 
 
@@ -409,8 +409,8 @@ void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap
     // We need a vector of 16 control points, four by four.
     const auto bezierWidth     = 4U,
                bezierHeight    = 4U,
-               bezierWidthInc  = bezierWidth - 1,
-               bezierHeightInc = bezierHeight - 1,
+               bezierWidthInc  = 3U,
+               bezierHeightInc = 3U,
                gridSize        = bezierWidth * bezierHeight;
 
     static std::vector<glm::vec3> controlPoints { 0 };
@@ -437,6 +437,29 @@ void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap
     {
         controlPoints.clear();
 
+        /*const auto& blCorner = heightMap[basePoint],
+                    brCorner = heightMap[basePoint + 1],
+                    tlCorner = heightMap[basePoint + heightMap.getWidth()],
+                    trCorner = heightMap[basePoint + heightMap.getWidth() + 1];
+
+        const auto left   = blCorner + (tlCorner - blCorner) * .5f,
+                   top    = tlCorner + (trCorner - tlCorner) * .5f,
+                   right  = trCorner + (brCorner - trCorner) * .5f,
+                   bottom = blCorner + (brCorner - blCorner) * .5f,
+                   middle = blCorner + (left - blCorner) + (bottom - blCorner);
+        
+        controlPoints.push_back (blCorner);
+        controlPoints.push_back (bottom);
+        controlPoints.push_back (brCorner);
+        
+        controlPoints.push_back (left);
+        controlPoints.push_back (middle);
+        controlPoints.push_back (right);
+        
+        controlPoints.push_back (tlCorner);
+        controlPoints.push_back (top);
+        controlPoints.push_back (trCorner);*/
+        
         const auto newLine = heightMap.getWidth() - bezierWidth;
 
         for (auto j = 0U; j < bezierHeight; ++j)
@@ -454,17 +477,16 @@ void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap
     const auto localU = (smallX - baseX) / bezierWidthInc,
                localV = (smallY - baseY) / bezierHeightInc;
 
-    vector.push_back (util::CubicBezierSurface::calculatePoint (controlPoints, localU, localV));
+    vector.push_back (util::BezierSurface::calculatePoint (controlPoints, localU, localV, util::BezierSurface::BezierAlgorithm::Cubic));
 }
 
 
 size_t Terrain::templateIndex (const bool isLastMeshX, const bool isLastMeshZ) const
 {
-    // Y + Y = TopRightCorner.
+    // Y + Y = TopRightCorner,
     // Y + N = RightColumn,
     // N + Y = TopRow,
-    // N + N = Central,
-
+    // N + N = Central.
     if (isLastMeshX)
     {
         return isLastMeshZ ? (size_t) MeshTemplate::TopRightCorner : (size_t) MeshTemplate::RightColumn;
