@@ -1,6 +1,6 @@
 #version 330
 
-uniform uint use_normal = 0;
+uniform int use_normal = 0;
 
 in vec3 varying_position;
 in vec3 varying_normal;

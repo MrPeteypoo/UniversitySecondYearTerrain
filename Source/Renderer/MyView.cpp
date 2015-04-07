@@ -242,7 +242,7 @@ void MyView::windowViewRender (std::shared_ptr<tygra::Window> window)
     glUseProgram(m_terrainShader);
 
     GLuint shading_id = glGetUniformLocation(m_terrainShader, "use_normal");
-    glUniform1ui(shading_id, m_shadeNormals);
+    glUniform1i(shading_id, m_shadeNormals);
 
     glm::mat4 world_xform = glm::mat4(1);
     glm::mat4 view_world_xform = view_xform * world_xform;

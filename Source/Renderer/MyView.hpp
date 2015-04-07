@@ -21,7 +21,7 @@ class MyView final : public tygra::WindowViewDelegate
     public:
         
         // Constants.
-        const unsigned int shadingModesAvailable = 3U;
+        const int shadingModesAvailable = 3;
 
 
         /////////////////////////////////
@@ -99,7 +99,7 @@ class MyView final : public tygra::WindowViewDelegate
 	    GLuint                                      m_cubeVAO       { 0 };          //!< The ID of the VAO containing information relating to the drawing of a cube.
 	    GLuint                                      m_cubeVBO       { 0 };          //!< The ID of the VBO containing the vertices of a cube.
 
-        unsigned int                                m_shadeNormals  { 0 };          //!< Determines whether the terrain should be shaded in white or in pastel with its normal vector.
+        int                                         m_shadeNormals  { 0 };          //!< Determines whether the terrain should be shaded in white or in pastel with its normal vector.
         
         std::shared_ptr<const SceneModel::Context>  m_scene         { nullptr };    //!< A poiner to the context used for camera information when rendering the scene.
 
