@@ -15,6 +15,7 @@ out vec3 varying_normal;
 void main(void)
 {
 	varying_normal = mat3(view_world_xform) * vertex_normal;
+    varying_normal = vertex_normal * 0.5 + 0.5;
     vec4 view_position = view_world_xform * vec4(vertex_position, 1.0);
     varying_position = view_position.xyz;
     gl_Position = projection_xform * view_position;

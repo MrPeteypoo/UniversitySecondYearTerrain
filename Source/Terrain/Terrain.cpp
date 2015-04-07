@@ -15,6 +15,7 @@
 #include <Terrain/HeightMap.hpp>
 #include <Terrain/TerrainConstructionData.hpp>
 #include <Utility/ElementCreation.hpp>
+#include <Utility/CubicBezierSurface.hpp>
 
 
 
@@ -372,12 +373,12 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
             {
                 for (auto x = xOffset; x < widthEnd; ++x)
                 {
-                    /*// Obtain the necessary UV co-ordinates to create the vertex. 
-                    const auto u = (float) x / width,
-                                v = (float) z / depth;
+                    // Obtain the necessary UV co-ordinates to create the vertex. 
+                    const auto u = (float) x / data.getWidth(),
+                               v = (float) z / data.getDepth();
 
-                    addVertex (vertices, heightMap, u, v);*/
-                    vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
+                    addVertex (vertices, heightMap, u, v);
+                    //vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
                 }
             }
 
@@ -400,6 +401,47 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
             vertices.clear();
         }
     }
+}
+
+
+void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap, const float u, const float v)
+{
+    // We need a vector of 16 control points, four by four.
+    const auto bezierWidth  = 4U,
+               bezierHeight = 4U,
+               gridSize     = bezierWidth * bezierHeight;
+
+    static std::vector<glm::vec3> controlPoints { 0 };
+    controlPoints.reserve (gridSize);
+
+    // Calculate where we are in the height map.
+    const auto smallX = u * heightMap.getWidth(),
+               smallY = v * heightMap.getHeight();
+
+    // Determine the base control point.
+    const auto baseX     = (unsigned int) smallX - (unsigned int) smallX % bezierWidth,
+               baseY     = (unsigned int) smallY - (unsigned int) smallY % bezierHeight,
+               basePoint = baseX + baseY * heightMap.getWidth();
+
+    // Check if we need to change the control points stored.
+    if (controlPoints.empty() || controlPoints.front() != heightMap[basePoint])
+    {
+        controlPoints.clear();
+
+        for (auto j = 0U; j < bezierHeight; ++j)
+        {
+            for (auto i = 0U; i < bezierWidth; ++i)
+            {
+                controlPoints.push_back (heightMap[basePoint + i + j * heightMap.getWidth()]);
+            }
+        }
+    }
+
+    // Create the local co-ordinates used by the bezier surface algorithm.
+    const auto localU = (smallX - baseX) / (bezierWidth - 0),
+               localV = (smallY - baseY) / (bezierHeight - 0);
+
+    vector.push_back (util::CubicBezierSurface::calculatePoint (controlPoints, localU, localV));
 }
 
 

@@ -107,12 +107,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\..\Builds\shapes_fs.glsl" />
-    <None Include="..\..\..\Builds\shapes_vs.glsl" />
-    <None Include="..\..\..\Builds\terrain_fs.glsl" />
-    <None Include="..\..\..\Builds\terrain_vs.glsl" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\..\External\src\SceneModel\Camera.cpp" />
     <ClCompile Include="..\..\..\External\src\SceneModel\Context.cpp" />
     <ClCompile Include="..\..\..\External\src\tgl\tgl.c" />
@@ -128,6 +122,7 @@
     <ClCompile Include="..\..\Terrain\HeightMap.cpp" />
     <ClCompile Include="..\..\Terrain\Terrain.cpp" />
     <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp" />
+    <ClCompile Include="..\..\Utility\CubicBezierSurface.cpp" />
     <ClCompile Include="..\..\Utility\ElementCreation.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -139,12 +134,20 @@
     <ClInclude Include="..\..\Terrain\HeightMap.hpp" />
     <ClInclude Include="..\..\Terrain\Terrain.hpp" />
     <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp" />
+    <ClInclude Include="..\..\Utility\CubicBezier.hpp" />
+    <ClInclude Include="..\..\Utility\CubicBezierSurface.hpp" />
     <ClInclude Include="..\..\Utility\ElementCreation.hpp" />
     <ClInclude Include="..\..\Utility\Rectangle.hpp" />
     <ClInclude Include="..\..\Renderer\Mesh.hpp" />
     <ClInclude Include="..\..\Renderer\MeshPool.hpp" />
     <ClInclude Include="..\..\Renderer\MyView.hpp" />
     <ClInclude Include="..\..\PoolSegment.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Demo\shapes_fs.glsl" />
+    <None Include="..\..\..\Demo\shapes_vs.glsl" />
+    <None Include="..\..\..\Demo\terrain_fs.glsl" />
+    <None Include="..\..\..\Demo\terrain_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

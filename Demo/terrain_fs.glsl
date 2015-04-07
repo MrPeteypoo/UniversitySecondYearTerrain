@@ -13,8 +13,9 @@ void main(void)
     vec3 colour = vec3(0, 0.4, 0.8);
     if (use_normal)
     {
-        float lit = dot(normalize(varying_normal), normalize(-varying_position));
-        colour = vec3(pow(lit, 0.5));
+        colour = varying_normal;
+        //float lit = dot(normalize(varying_normal), normalize(-varying_position));
+        //colour = vec3(pow(lit, 0.5));
     }
     fragment_colour = vec4(colour, 1.0);
 }

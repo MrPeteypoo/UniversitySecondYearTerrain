@@ -91,6 +91,9 @@ bool HeightMap::loadFromPNG (const std::string& file, const glm::vec3& worldScal
 
         m_data.reserve (m_width * m_height);
 
+        // The width and height must be divisible by four for the height map to be valid.
+        assert (m_width % 4 == 0 && m_height % 4 == 0);
+
         // Create the heightmap from the image data.
         auto       image    = (const uint8_t*) heightMap.pixels();
 

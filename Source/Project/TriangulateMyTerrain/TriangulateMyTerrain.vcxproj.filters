@@ -24,20 +24,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Builds\shapes_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\Builds\shapes_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\Builds\terrain_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\Builds\terrain_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\Framework\MyController.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
@@ -82,6 +68,9 @@
     <ClCompile Include="..\..\Utility\ElementCreation.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Utility\CubicBezierSurface.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\MyController.hpp">
@@ -124,5 +113,25 @@
     <ClInclude Include="..\..\Utility\ElementCreation.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Utility\CubicBezier.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\CubicBezierSurface.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Demo\shapes_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Demo\shapes_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Demo\terrain_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Demo\terrain_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
