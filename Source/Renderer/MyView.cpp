@@ -174,14 +174,14 @@ void MyView::terrainLoading()
                 depth  = -m_scene->getTerrainSizeZ();
 
     // Construct the terrain scalar to get the correct visual output.
-    //const auto scale = glm::vec3 (width, height, depth);
-    const auto scale = glm::vec3 (256.f, 25.f, -256.f);
+    const auto scale = glm::vec3 (width, height, depth);
+    //const auto scale = glm::vec3 (32.f, 2.f, -32.f);
 
     // Load the height map with the desired values.
     const HeightMap heightMap { file, scale };
 
     // Build the terrain and get it ready for rendering.
-    m_terrain.setDivisor (64);
+    m_terrain.setDivisor (128);
     m_terrain.buildFromHeightMap (heightMap, 0, 0);
     m_terrain.prepareForRender (m_terrainShader);
 }
@@ -275,7 +275,7 @@ void MyView::windowViewRender (std::shared_ptr<tygra::Window> window)
 
     glBindVertexArray(m_cubeVAO);
 
-    /*for (const auto& pos : m_scene->getAllShapePositions())
+    for (const auto& pos : m_scene->getAllShapePositions())
     {
         world_xform = glm::translate(glm::mat4(1), glm::vec3(pos.x, 64, -pos.y));
         view_world_xform = view_xform * world_xform;
@@ -286,5 +286,5 @@ void MyView::windowViewRender (std::shared_ptr<tygra::Window> window)
                            glm::value_ptr(view_world_xform));
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
-    }*/
+    }
 }

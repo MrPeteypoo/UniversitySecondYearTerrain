@@ -32,8 +32,6 @@ Terrain::ConstructionData& Terrain::ConstructionData::operator= (ConstructionDat
         m_vertexCount = move.m_vertexCount;
 
         m_divisor     = move.m_divisor;
-        m_remainderX  = move.m_remainderX;
-        m_remainderZ  = move.m_remainderZ;
 
         m_meshCountX  = move.m_meshCountX;
         m_meshCountZ  = move.m_meshCountZ;
@@ -45,8 +43,6 @@ Terrain::ConstructionData& Terrain::ConstructionData::operator= (ConstructionDat
         move.m_vertexCount = 0;
 
         move.m_divisor     = 0;
-        move.m_remainderX  = 0;
-        move.m_remainderZ  = 0;
 
         move.m_meshCountX  = 0;
         move.m_meshCountZ  = 0;
@@ -72,21 +68,9 @@ void Terrain::ConstructionData::recalculate (const unsigned int width, const uns
     m_vertexCount = width * depth;
     
     m_divisor     = divisor;
-    m_remainderX  = width % divisor;
-    m_remainderZ  = depth % divisor;
 
     m_meshCountX  = width / divisor;
     m_meshCountZ  = depth / divisor;
-
-    if (hasRemainderX())
-    {
-        ++m_meshCountX;
-    }
-
-    if (hasRemainderZ())
-    {
-        ++m_meshCountZ;
-    }
 
     m_meshTotal = m_meshCountX * m_meshCountZ;
 }

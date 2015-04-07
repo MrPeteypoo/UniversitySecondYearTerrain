@@ -79,6 +79,9 @@
     <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp">
       <Filter>Terrain</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Utility\ElementCreation.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\MyController.hpp">
@@ -117,6 +120,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp">
       <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\ElementCreation.hpp">
+      <Filter>Utility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -57,14 +57,6 @@ class Terrain::ConstructionData final
         /// <returns> How many vertices wide and deep terrain patches should be. </returns>
         unsigned int getDivisor() const     { return m_divisor; }
 
-        /// <summary> Gets the remainder of vertices on the X axis caused by the given divisor. </summary>
-        /// <returns> How wide the last patch on the X axis should be. </returns>
-        unsigned int getRemainderX() const  { return m_remainderX; }
-
-        /// <summary> Gets the remainder of vertices on the Z axis caused by the given divisor. </summary>
-        /// <returns> How wide the last patch on the Z axis should be. </returns>
-        unsigned int getRemainderZ() const  { return m_remainderZ; }
-
         /// <summary> Gets the mesh width of the terrain </summary>
         /// <returns> How many meshes wide the terrain should be. </returns>
         unsigned int getMeshCountX() const  { return m_meshCountX; }
@@ -77,14 +69,6 @@ class Terrain::ConstructionData final
         /// <returns> How many total meshes there should be. </returns>
         unsigned int getMeshTotal() const   { return m_meshTotal; }
 
-        /// <summary> Checks if the X axis has a remainder. </summary>
-        /// <returns> Whether a remainder on the X axis is necessary. </returns>
-        bool hasRemainderX() const          { return m_remainderX > 0; }
-
-        /// <summary> Checks if the Z axis has a remainder. </summary>
-        /// <returns> Whether a remainder on the Z axis is necessary. </returns>
-        bool hasRemainderZ() const          { return m_remainderZ > 0; }
-
     private:
 
         ///////////////////
@@ -96,8 +80,6 @@ class Terrain::ConstructionData final
         unsigned int m_vertexCount  { 0 };  //!< The total number of vertices that make up the terrain.
 
         unsigned int m_divisor      { 0 };  //!< The width and depth of each terrain partition.
-        unsigned int m_remainderX   { 0 };  //!< How wide the last patch on the X axis should be.
-        unsigned int m_remainderZ   { 0 };  //!< How deep the last patch on the Z axis should be.
 
         unsigned int m_meshCountX   { 0 };  //!< How many meshes wide the terrain is.
         unsigned int m_meshCountZ   { 0 };  //!< How many meshes deep the terrain is.

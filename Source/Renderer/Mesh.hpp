@@ -29,7 +29,7 @@ struct Mesh final
     /// <param name="firstVertex"> The index of a VBO where the vertices for the mesh begin. </param>
     /// <param name="elementsOffset"> An offset in bytes used to draw the mesh in the scene. </param>
     /// <param name="elementCount"> Indicates how many elements in the elements buffer define the mesh. </param>
-    Mesh (const GLint firstVertex, const GLint elementsOffset, const GLuint elementCount)
+    Mesh (const GLint firstVertex, const GLuint elementsOffset, const GLuint elementCount)
         : firstVertex (firstVertex), elementsOffset (elementsOffset), elementCount (elementCount) {}
 
     Mesh (Mesh&& move);

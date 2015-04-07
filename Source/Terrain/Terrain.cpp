@@ -14,6 +14,7 @@
 #include <Renderer/Vertex.hpp>
 #include <Terrain/HeightMap.hpp>
 #include <Terrain/TerrainConstructionData.hpp>
+#include <Utility/ElementCreation.hpp>
 
 
 
@@ -34,8 +35,14 @@ Terrain& Terrain::operator= (Terrain&& move)
         // Ensure we don't have valid data!
         cleanUp();
 
-        m_pool    = std::move (move.m_pool);
-        m_patches = std::move (move.m_patches);
+        m_pool          = std::move (move.m_pool);
+        m_patches       = std::move (move.m_patches);
+        m_meshTemplates = std::move (move.m_meshTemplates);
+        
+        m_divisor       = move.m_divisor;
+
+        // Reset primitives.
+        move.m_divisor = 0;
     }
 
     return *this;
@@ -73,8 +80,11 @@ void Terrain::buildFromHeightMap (const HeightMap& heightMap, const unsigned int
     m_pool.generate();
 
     // Determine the dimensions of the terrain.
-    const auto width = upscaledWidth == 0 ? heightMap.getWidth()  : upscaledWidth,
-               depth = upscaledDepth == 0 ? heightMap.getHeight() : upscaledDepth;
+    const auto width   = upscaledWidth == 0 ? heightMap.getWidth()  : upscaledWidth,
+               depth   = upscaledDepth == 0 ? heightMap.getHeight() : upscaledDepth,
+               divisor = determineDivisor (width, depth);
+
+    assert (width % divisor == 0 && depth % divisor == 0);
 
     // Create the construction data so we can build the terrain.
     const ConstructionData data { width, depth, determineDivisor (width, depth) };
@@ -141,25 +151,11 @@ unsigned int Terrain::determineDivisor (const unsigned int width, const unsigned
 
 void Terrain::allocateGPUMemory (const ConstructionData& data)
 {
-    // We have four potential sets of element data, we must calculate the size of each to determine the correct memory.
-    const auto patchCount = data.getDivisor() * data.getDivisor(),
-               remXCount  = data.hasRemainderX() ? data.getRemainderX() * data.getDivisor() : patchCount,
-               remZCount  = data.hasRemainderZ() ? data.getRemainderZ() * data.getDivisor() : patchCount;
+    // We only store the elements it takes to render an entire patch.
+    const auto quadCount = data.getDivisor() * data.getDivisor();
 
-    auto remXZCount = patchCount;
-
-    if (data.hasRemainderX())
-    {
-        remXZCount = data.hasRemainderZ() ? data.getRemainderX() * data.getRemainderZ() : remXCount;
-    }
-
-    else if (data.hasRemainderZ())
-    {
-        remXZCount = data.getRemainderZ() * data.getDivisor();
-    }
-
-    // The total number of uniquely drawn quads is the sum all of sets, multiple by two to convert quads to triangles.
-    const auto triangleCount = (patchCount + remXCount + remZCount + remXZCount) * 2;
+    // If we have more than one mesh we need four sets of elements data for the four types of patches. Two triangles make a quad.
+    const auto triangleCount = data.getMeshTotal() > 1 ? quadCount * 4 * 2 : quadCount * 2;
 
     // Three elements are required to draw a single triangle.
     const auto elementCount = triangleCount * 3;
@@ -222,7 +218,7 @@ void Terrain::generateElements (const ConstructionData& data)
         m_pool.fillSection (BufferType::Elements, elementOffset, size, elements.data());
 
         // Update the mesh with the correct values.
-        m_meshTemplates[(size_t) mesh] = Mesh (0, elementOffset, elements.size());
+        m_meshTemplates[(unsigned int) mesh] = { 0, elementOffset, elements.size() };
         
         // Increment the sausage!
         elementOffset += size;
@@ -232,15 +228,13 @@ void Terrain::generateElements (const ConstructionData& data)
     {
         // We should just use the normal divisor if no remainder exists.
         const auto width      = data.getDivisor(),
-                   depth      = data.getDivisor(),
-                   remainderX = data.hasRemainderX() ? data.getRemainderX() : data.getDivisor(),
-                   remainderZ = data.hasRemainderZ() ? data.getRemainderZ() : data.getDivisor();
+                   depth      = data.getDivisor();
     
         // Load the element arrays into the GPU.
-        createElements (MeshTemplate::Central,        width, depth);
-        createElements (MeshTemplate::TopRow,         width, remainderZ);
-        createElements (MeshTemplate::RightColumn,    remainderX, depth);
-        createElements (MeshTemplate::TopRightCorner, remainderX, remainderZ);
+        for (auto i = 0U; i < (unsigned int) MeshTemplate::Count; ++i)
+        {
+            createElements ((MeshTemplate) i, width, depth);
+        }
     }
 
     // If we aren't segmenting then just load the top right corner template.
@@ -262,7 +256,7 @@ void Terrain::addElements (std::vector<unsigned int>& elements, const unsigned i
                endDepth = depth - 1;
 
     // Run the triangle algorithm to add the elements.
-    triangleAlgorithm (elements, offset, endWidth, endDepth, increment, width);
+    util::triangleAlgorithm (elements, offset, endWidth, endDepth, increment, width);
 }
 
 
@@ -332,60 +326,7 @@ void Terrain::addStitching (std::vector<unsigned int>& elements, const Construct
     }
 
     // Finally run the algorithm to generate elements.
-    triangleAlgorithm (elements, offset, width, depth, increment, lineIncrement, startMirrored);
-}
-
-
-void Terrain::triangleAlgorithm (std::vector<unsigned int>& elements, const unsigned int offset, const unsigned int width, const unsigned int depth, 
-                                                                      const unsigned int increment, const unsigned int lineIncrement, const bool startMirrored)
-{
-    /// We create an alternating square pattern for efficiency. It should look as shown below.
-    /// 
-    /// |/|\|/|
-    /// |\|/|\|
-    /// |/|\|/|
-    /// 
-
-    // Use mirrors to maintain the alternating pattern when patches are made up with even or odd number of vertices.
-    bool mirrorX = startMirrored, 
-         mirrorZ = startMirrored;
-
-    for (auto z = 0U; z < depth; ++z)
-    {
-        for (auto x = 0U; x < width; ++x)
-        {
-            // Calculate the current vertex.
-            const auto vertex = offset + x + z * lineIncrement;
-
-            lowerTriangle (elements, vertex, increment, lineIncrement, mirrorX);
-            upperTriangle (elements, vertex, increment, lineIncrement, mirrorX);
-            
-            mirrorX = !mirrorX;
-        }
-
-        // Here's the magic which maintains the pattern with an even/odd width.
-        mirrorX = mirrorZ = !mirrorZ;
-    }
-}
-
-
-void Terrain::lowerTriangle (std::vector<unsigned int>& elements, const unsigned int current, const unsigned int increment, const unsigned int width, const bool mirror)
-{
-    const auto triangleEnd = mirror ? current + width : current + width + increment;
-
-    elements.push_back (current);
-    elements.push_back (current + increment);
-    elements.push_back (triangleEnd);
-}
-
-
-void Terrain::upperTriangle (std::vector<unsigned int>& elements, const unsigned int current, const unsigned int increment, const unsigned int width, const bool mirror)
-{
-    const auto triangleEnd = mirror ? current + increment : current;
-
-    elements.push_back (current + width + increment);
-    elements.push_back (current + width);
-    elements.push_back (triangleEnd);
+    util::triangleAlgorithm (elements, offset, width, depth, increment, lineIncrement, startMirrored);
 }
 
 
@@ -398,15 +339,8 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
     // Cache some constants we'll be using.
     const auto divisor       = data.getDivisor();
 
-    const auto hasRemainderX = data.hasRemainderX(),
-               hasRemainderZ = data.hasRemainderZ();
-
-    const auto remainderX    = data.getRemainderX(),
-               remainderZ    = data.getRemainderZ();
-
     const auto meshCountX    = data.getMeshCountX(),
-               meshCountZ    = data.getMeshCountZ(),               
-               meshTotal     = meshCountX * meshCountZ;
+               meshCountZ    = data.getMeshCountZ();
                
     const auto lastMeshX     = meshCountX - 1,
                lastMeshZ     = meshCountZ - 1;
@@ -416,58 +350,55 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
 
     // Lets reserve us some memory to speed this process up!
     vertices.reserve (divisor * divisor);
-    m_patches.reserve (meshTotal);
+    m_patches.reserve (data.getMeshTotal());
 
     // Keep track of the elements offset.
     GLint firstVertex { 0 };
 
-    // We're going to need three loops, one is updates the Mesh vector and the other two create the vertices.
-    for (auto mesh = 0U; mesh < meshTotal; ++mesh)
+    // We're going to need two loops to determine the correct mesh and two loops to calculate interpolated co-ordinates.
+    for (auto zTile = 0U; zTile < meshCountZ; ++zTile)
     {
-        // We need the vertex offsets so can we get the obtain the correct data from the height map.
-        const auto xTile   = mesh % meshCountX,
-                   zTile   = mesh / meshCountZ,
-                   xOffset = xTile * divisor,
-                   zOffset = zTile * divisor;
-
-        // Check if we're on the last tile on either axis.
-        const auto isLastMeshX = xTile == lastMeshX,
-                   isLastMeshZ = zTile == lastMeshZ;
-
-        // Make sure we don't cause access violation errors by checking if we're using an oddly sized heightmap providing remainders.
-        const auto patchWidth = hasRemainderX && isLastMeshX ? remainderX : divisor,
-                   patchDepth = hasRemainderZ && isLastMeshZ ? remainderZ : divisor;
-
-        // Cache the values which end the loops so we don't calculate them every time.
-        const auto widthEnd = xOffset + patchWidth,
-                   depthEnd = zOffset + patchDepth;
-
-        for (auto z = zOffset; z < depthEnd; ++z)
+        for (auto xTile = 0U; xTile < meshCountX; ++xTile)
         {
-            for (auto x = xOffset; x < widthEnd; ++x)
+            // We need the vertex offsets so can we get the obtain the correct data from the height map.
+            const auto xOffset = xTile * divisor,
+                       zOffset = zTile * divisor;
+
+            // Cache the values which end the loops so we don't calculate them every time.
+            const auto widthEnd = xOffset + divisor,
+                       depthEnd = zOffset + divisor;
+
+            for (auto z = zOffset; z < depthEnd; ++z)
             {
-                /*// Obtain the necessary UV co-ordinates to create the vertex. 
-                const auto u = (float) x / width,
-                            v = (float) z / depth;
+                for (auto x = xOffset; x < widthEnd; ++x)
+                {
+                    /*// Obtain the necessary UV co-ordinates to create the vertex. 
+                    const auto u = (float) x / width,
+                                v = (float) z / depth;
 
-                addVertex (vertices, heightMap, u, v);*/
-                vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
+                    addVertex (vertices, heightMap, u, v);*/
+                    vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
+                }
             }
+
+            // Add the data to the GPU.
+            const auto verticesSize = vertices.size() * sizeof (Vertex);
+
+            m_pool.fillSection (BufferType::Vertices, firstVertex * sizeof (Vertex), verticesSize, vertices.data());
+
+            // Check if we're on the last tile on either axis.
+            const bool isLastMeshX = xTile == lastMeshX,
+                       isLastMeshZ = zTile == lastMeshZ;
+
+            // Now construct the mesh.
+            const auto& mesh = m_meshTemplates[templateIndex (isLastMeshX, isLastMeshZ)];
+
+            m_patches.emplace_back (firstVertex, mesh.elementsOffset, mesh.elementCount);
+
+            // Increment everything captain!
+            firstVertex += vertices.size();
+            vertices.clear();
         }
-
-        // Add the data to the GPU.
-        const auto verticesSize = vertices.size() * sizeof (Vertex);
-
-        m_pool.fillSection (BufferType::Vertices, firstVertex * sizeof (Vertex), verticesSize, vertices.data());
-
-        // Now construct the mesh.
-        const auto mesh = m_meshTemplates[templateIndex (isLastMeshX, isLastMeshZ)];
-
-        m_patches.emplace_back (firstVertex, mesh.elementsOffset, mesh.elementCount);
-
-        // Increment everything captain!
-        firstVertex += vertices.size();
-        vertices.clear();
     }
 }
 
