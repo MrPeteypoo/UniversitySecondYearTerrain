@@ -85,9 +85,10 @@ bool HeightMap::loadFromPNG (const std::string& file, const glm::vec3& worldScal
 
     if (heightMap.containsData() && heightMap.bytesPerComponent() == 1)
     {
-        // Calculate the amount of data we need to create.
-        m_width  = heightMap.width();
-        m_height = heightMap.height();
+        // Calculate the amount of data we need to create and update our member variables.
+        m_width      = heightMap.width();
+        m_height     = heightMap.height();
+        m_worldScale = worldScale;
 
         m_data.reserve (m_width * m_height);
 
@@ -128,7 +129,7 @@ bool HeightMap::loadFromPNG (const std::string& file, const glm::vec3& worldScal
                                                     z          / maxValues.z);
 
                 // Put it all together and you get the world position!
-                const auto position = coordinates * worldScale;
+                const auto position = coordinates * m_worldScale;
 
                 // Update the internal data and increment the pointer.
                 m_data.push_back (position);

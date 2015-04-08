@@ -156,6 +156,11 @@ class Terrain final
         /// <param name="v"> A 0 to 1 co-ordinate on the Z axis where the vertex should be. </param>
         void addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap, const float u, const float v);
 
+        /// <summary> Appies Fractional Brownian Motion to the given vertices, moving them along their normal vector. </summary>
+        /// <param name="vertices"> The vertices to modify. </param>
+        /// <param name="data"> The construction data required to calculate noise modifiers. </param>
+        void applyNoise (std::vector<Vertex>& vertices, const ConstructionData& data);
+
         /// <summary> Obtains the index of the template to use for a mesh with the given properties. </summary>
         /// <param name="isLastMeshX"> Is the mesh the last mesh on the X axis? </param>
         /// <param name="isLastMeshZ"> Is the mesh the last mesh on the Z axis? </param>

@@ -137,6 +137,7 @@
     <ClInclude Include="..\..\Utility\CubicBezier.hpp" />
     <ClInclude Include="..\..\Utility\BezierSurface.hpp" />
     <ClInclude Include="..\..\Utility\ElementCreation.hpp" />
+    <ClInclude Include="..\..\Utility\NoiseGenerator.hpp" />
     <ClInclude Include="..\..\Utility\QuadraticBezier.hpp" />
     <ClInclude Include="..\..\Utility\Rectangle.hpp" />
     <ClInclude Include="..\..\Renderer\Mesh.hpp" />

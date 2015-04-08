@@ -122,6 +122,9 @@
     <ClInclude Include="..\..\Utility\BezierSurface.hpp">
       <Filter>Utility</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Utility\NoiseGenerator.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Demo\shapes_fs.glsl">

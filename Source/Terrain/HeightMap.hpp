@@ -49,10 +49,14 @@ class HeightMap final
         /////////////////////////
 
         /// <summary> Gets the width of the height map data. </summary>
-        unsigned int getWidth() const   { return m_width; }
+        unsigned int getWidth() const           { return m_width; }
 
         /// <summary> Gets the height of the height map data. </summary>
-        unsigned int getHeight() const  { return m_height; }
+        unsigned int getHeight() const          { return m_height; }
+
+        /// <summary> Gets the world scale of the height map. </summary>
+        /// <returns> The dimensions of the height map in world units. </returns>
+        const glm::vec3& getWorldScale() const  { return m_worldScale; }
 
         /// <summary> Gets the point at the given co-ordinates. </summary>
         /// <param name="x"> The X co-ordinate of the height map. </param>
@@ -77,10 +81,11 @@ class HeightMap final
         // Internal data //
         ///////////////////
 
-        unsigned int            m_width     { 0 };  //!< The width of the height map image.
-        unsigned int            m_height    { 0 };  //!< The height of the height map image.
+        unsigned int            m_width      { 0 }; //!< The width of the height map image.
+        unsigned int            m_height     { 0 }; //!< The height of the height map image.
+        glm::vec3               m_worldScale { 0 }; //!< The scale of the height map in world units.
 
-        std::vector<glm::vec3>  m_data      { };    //!< The 3D co-ordinates of the desired terrain.
+        std::vector<glm::vec3>  m_data       { };   //!< The 3D co-ordinates of the desired terrain.
 };
 
 #endif // HEIGHT_MAP_3GP_HPP

@@ -14,8 +14,9 @@
 #include <Renderer/Vertex.hpp>
 #include <Terrain/HeightMap.hpp>
 #include <Terrain/TerrainConstructionData.hpp>
-#include <Utility/ElementCreation.hpp>
 #include <Utility/BezierSurface.hpp>
+#include <Utility/ElementCreation.hpp>
+#include <Utility/NoiseGenerator.hpp>
 
 
 
@@ -88,7 +89,7 @@ void Terrain::buildFromHeightMap (const HeightMap& heightMap, const unsigned int
     assert (width % divisor == 0 && depth % divisor == 0);
 
     // Create the construction data so we can build the terrain.
-    const ConstructionData data { width, depth, determineDivisor (width, depth) };
+    const ConstructionData data { width, depth, divisor, heightMap.getWorldScale().x, heightMap.getWorldScale().z };
 
     // Ensure the GPU has enough memory to process the terrain.
     allocateGPUMemory (data);
@@ -153,7 +154,7 @@ unsigned int Terrain::determineDivisor (const unsigned int width, const unsigned
 void Terrain::allocateGPUMemory (const ConstructionData& data)
 {
     // We only store the elements it takes to render an entire patch.
-    const auto quadCount = data.getDivisor() * data.getDivisor();
+    const auto quadCount = data.getMeshVertices();
 
     // If we have more than one mesh we need four sets of elements data for the four types of patches. Two triangles make a quad.
     const auto triangleCount = data.getMeshTotal() > 1 ? quadCount * 4 * 2 : quadCount * 2;
@@ -179,7 +180,7 @@ void Terrain::generateElements (const ConstructionData& data)
 {
     // Firstly we need a vector to store the glorious data inside of. 
     std::vector<unsigned int> elements { };
-    elements.reserve (data.getDivisor() * data.getDivisor());
+    elements.reserve (data.getMeshVertices() * 3);
 
     // Keep track of the element offset for the meshes.
     GLuint elementOffset { 0 };
@@ -350,7 +351,7 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
     std::vector<Vertex> vertices { };
 
     // Lets reserve us some memory to speed this process up!
-    vertices.reserve (divisor * divisor);
+    vertices.reserve (data.getMeshVertices());
     m_patches.reserve (data.getMeshTotal());
 
     // Keep track of the elements offset.
@@ -378,9 +379,11 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
                                v = (float) z / data.getDepth();
 
                     addVertex (vertices, heightMap, u, v);
-                    //vertices.emplace_back (heightMap.getPoint (x, z), glm::vec3 (0, 1, 0));
                 }
             }
+
+            // Apply some beautiful noise to the terrain.
+            applyNoise (vertices, data);
 
             // Add the data to the GPU.
             const auto verticesSize = vertices.size() * sizeof (Vertex);
@@ -436,29 +439,6 @@ void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap
     if (controlPoints.empty() || controlPoints.front() != heightMap[basePoint])
     {
         controlPoints.clear();
-
-        /*const auto& blCorner = heightMap[basePoint],
-                    brCorner = heightMap[basePoint + 1],
-                    tlCorner = heightMap[basePoint + heightMap.getWidth()],
-                    trCorner = heightMap[basePoint + heightMap.getWidth() + 1];
-
-        const auto left   = blCorner + (tlCorner - blCorner) * .5f,
-                   top    = tlCorner + (trCorner - tlCorner) * .5f,
-                   right  = trCorner + (brCorner - trCorner) * .5f,
-                   bottom = blCorner + (brCorner - blCorner) * .5f,
-                   middle = blCorner + (left - blCorner) + (bottom - blCorner);
-        
-        controlPoints.push_back (blCorner);
-        controlPoints.push_back (bottom);
-        controlPoints.push_back (brCorner);
-        
-        controlPoints.push_back (left);
-        controlPoints.push_back (middle);
-        controlPoints.push_back (right);
-        
-        controlPoints.push_back (tlCorner);
-        controlPoints.push_back (top);
-        controlPoints.push_back (trCorner);*/
         
         const auto newLine = heightMap.getWidth() - bezierWidth;
 
@@ -478,6 +458,29 @@ void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap
                localV = (smallY - baseY) / bezierHeightInc;
 
     vector.push_back (util::BezierSurface::calculatePoint (controlPoints, localU, localV, util::BezierSurface::BezierAlgorithm::Cubic));
+}
+
+
+void Terrain::applyNoise (std::vector<Vertex>& vertices, const ConstructionData& data)
+{
+    // Sample as necessary.
+    const auto samples    = 8U;
+    const auto frequency  = 1.f / (data.getWorldArea() / data.getVertexCount()),
+               gain       = 0.5f,
+               lacunarity = 2.1042f;
+
+    for (auto& vertex : vertices)
+    {
+        // Cache the position captain!
+        auto& position = vertex.position;
+
+        // Calculate some beautiful noise.
+        const auto noise = util::NoiseGenerator<float>::brownianMotion (position, samples, frequency, gain, lacunarity);
+                
+        // Move the vertex along its normal vector.
+        position += vertex.normal * noise;
+    }
+    
 }
 
 

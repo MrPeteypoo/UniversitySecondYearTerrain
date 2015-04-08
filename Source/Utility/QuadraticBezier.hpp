@@ -85,9 +85,9 @@ namespace util
     T QuadraticBezier::bernsteinTangent (const unsigned int index, const T delta)
     {
         // B'0,2 == 2(1-u),
-        // B'1,2 == 1,
+        // B'1,2 == 2-4u,
         // B'2,2 == 2u.
-        const auto one = (T) 1, two = (T) 2, three = (T) 3, six = (T) 6;
+        const auto one = (T) 1, two = (T) 2, three = (T) 3, four = (T) 4;
 
         switch (index)
         {
@@ -95,7 +95,7 @@ namespace util
                 return two * (one - delta);
 
             case 1:
-                return delta * (one - delta);
+                return two - four * delta;
 
             case 2:
                 return two * delta;
