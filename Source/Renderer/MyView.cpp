@@ -173,16 +173,17 @@ void MyView::terrainLoading()
                 height = m_scene->getTerrainSizeY(),    
                 depth  = -m_scene->getTerrainSizeZ();
 
+    const auto  shrink = 8U;
+
     // Construct the terrain scalar to get the correct visual output.
     const auto scale = glm::vec3 (width, height, depth);
-    //const auto scale = glm::vec3 (256.f, 20.f, -256.f);
 
     // Load the height map with the desired values.
-    const HeightMap heightMap { file, scale };
+    const HeightMap heightMap { file, scale / (float) shrink };
 
     // Build the terrain and get it ready for rendering.
     m_terrain.setDivisor (256);
-    m_terrain.buildFromHeightMap (heightMap, 4096, 4096);
+    m_terrain.buildFromHeightMap (heightMap, 8192U / shrink, 8192U / shrink);
     m_terrain.prepareForRender (m_terrainShader);
 }
 
