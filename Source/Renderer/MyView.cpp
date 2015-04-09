@@ -185,13 +185,13 @@ void MyView::terrainLoading()
     const HeightMap heightMap { file, scale / (float) 1 };
 
     // Time for some noise. We don't use a lacunarity of 2.f because it results in a lot of integer position, this causes
-    // the noise function to return zero. We use 1/f gain.
+    // the noise function to return zero. We use 1/f gain. 
     const auto lacunarity  = 2.1042f,
-               gain        = 1.f / lacunarity;
+               gain        = 1 / lacunarity;
         
     // Use some normal and height displacement values which make the terrain look nice.
-    const auto normalNoise = NoiseArgs (4U, 0.03f, lacunarity, gain, scale.y * 0.01f),
-               heightNoise = NoiseArgs (4U, 0.5f, lacunarity, gain, scale.y * 0.001f);
+    const auto normalNoise = NoiseArgs (8U, 0.35f, lacunarity, gain, 1.8f),
+               heightNoise = NoiseArgs (8U, 1.f / height, lacunarity, gain, 1.8f);
 
     // Build the terrain and get it ready for rendering.
     m_terrain.buildFromHeightMap (heightMap, normalNoise, heightNoise, terrainWidth, terrainDepth);

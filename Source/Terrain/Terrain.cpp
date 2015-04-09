@@ -490,9 +490,9 @@ void Terrain::applyNoise (std::vector<Vertex>& vertices, const NoiseArgs& normal
             {
                 // Calculate some beautiful normal displacement.
                 const auto heightDisplacement = util::NoiseGenerator<float>::brownianMotion (position, height);
-                
+
                 // Move the vertex along its normal vector.
-                position += glm::vec3 (0, heightDisplacement, 0);
+                position.y += heightDisplacement;
             }
         }
     }
@@ -538,13 +538,10 @@ void Terrain::calculateNormals (std::vector<Vertex>& vertices, const Constructio
 
                 // The cross product of the two will provide the basis of calculating a weighted normal.
                 const auto cross = glm::cross (aToB, aToC);
-
-                // The magnitude provides a means of calculating the area of the triangle and normalising the vector.
-                const auto magnitude = glm::length (cross);
                 
-                // Area == 1/2 * magnitude, multiply this by the normal of the cross product to get a weighted normal.
-                result += (magnitude / 2) * 
-                          (cross / magnitude);
+                // Area == 1/2 * magnitude, multiply this by the direction of the cross product to get a weighted normal.
+                // This can be simplified to cross / 2.f;
+                result += (cross / 2.f);
             }
 
             // Normalise it to get a smoothed normal.
