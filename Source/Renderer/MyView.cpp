@@ -174,7 +174,7 @@ void MyView::terrainLoading()
                 depth  = m_scene->getTerrainSizeZ();
 
     // Use this to control the scale of the terrain.
-    const auto  shrink       = 8U,
+    const auto  shrink       = 2U,
                 terrainWidth = (unsigned int) width / shrink,
                 terrainDepth = (unsigned int) depth / shrink;
 
@@ -182,16 +182,15 @@ void MyView::terrainLoading()
     const auto scale = glm::vec3 (width, height, -depth);
 
     // Load the height map with the desired values.
-    const HeightMap heightMap { file, scale / (float) 1 };
+    const HeightMap heightMap { file, scale / (float) shrink };
 
-    // Time for some noise. We don't use a lacunarity of 2.f because it results in a lot of integer position, this causes
-    // the noise function to return zero. We use 1/f gain. 
-    const auto lacunarity  = 2.1042f,
+    // Time for some noise. We'll use the industry standard 1/f noise with 2 lacunarity.
+    const auto lacunarity  = 2.f,
                gain        = 1 / lacunarity;
         
     // Use some normal and height displacement values which make the terrain look nice.
-    const auto normalNoise = NoiseArgs (8U, 0.35f, lacunarity, gain, 1.8f),
-               heightNoise = NoiseArgs (8U, 1.f / height, lacunarity, gain, 1.8f);
+    const auto normalNoise = NoiseArgs (8U, 0.5f, lacunarity, gain, scale.y * 0.001f),
+               heightNoise = NoiseArgs (2U, 0.025f, lacunarity, gain, scale.y * 0.0175f);
 
     // Build the terrain and get it ready for rendering.
     m_terrain.buildFromHeightMap (heightMap, normalNoise, heightNoise, terrainWidth, terrainDepth);

@@ -2,6 +2,7 @@
 
 
 // STL headers.
+#include <algorithm>
 #include <stdexcept>
 
 
@@ -99,6 +100,10 @@ void Terrain::buildFromHeightMap (const HeightMap& heightMap, const NoiseArgs& n
 
     // Generate the terrain!
     generateVertices (heightMap, data, normal, height);
+
+    // We don't need the element data anymore.
+    m_elements.clear();
+    m_elements.shrink_to_fit();
 }
 
 
@@ -178,9 +183,8 @@ void Terrain::allocateGPUMemory (const ConstructionData& data)
 
 void Terrain::generateElements (const ConstructionData& data)
 {
-    // Firstly we need a vector to store the glorious data inside of. 
-    std::vector<unsigned int> elements { };
-    elements.reserve (data.getMeshVertices() * 3);
+    // Lets speed this process up by reserving enough capacity.
+    m_elements.reserve (data.getMeshVertices() * 3);
 
     // Keep track of the element offset for the meshes.
     GLuint elementOffset { 0 };
@@ -190,60 +194,56 @@ void Terrain::generateElements (const ConstructionData& data)
     const auto createElements = [&] (const MeshTemplate mesh, const unsigned int width, const unsigned int depth)
     {
         // Start with clean data.
-        elements.clear();
+        m_elements.clear();
 
         // Generate the elements as normal.
-        addElements (elements, width, depth);
+        addElements (m_elements, width, depth);
         
         // Stitch the X.
         if (mesh == MeshTemplate::Central || mesh == MeshTemplate::TopRow)
         {
-            addStitching (elements, data, depth, StitchingMode::XAxis);
+            addStitching (m_elements, data, depth, StitchingMode::XAxis);
         }
 
         // Stitch the Z.
         if (mesh == MeshTemplate::Central || mesh == MeshTemplate::RightColumn)
         {
-            addStitching (elements, data, width, StitchingMode::ZAxis);
+            addStitching (m_elements, data, width, StitchingMode::ZAxis);
         }
 
         // Clean up after ourselves.
         if (mesh == MeshTemplate::Central)
         {
             // The length is ignored.
-            addStitching (elements, data, 1, StitchingMode::Corner);
+            addStitching (m_elements, data, 1, StitchingMode::Corner);
         }
 
         // Load the data into the GPU.
-        const auto size = elements.size() * sizeof (unsigned int);
+        const auto size = m_elements.size() * sizeof (unsigned int);
         
-        m_pool.fillSection (BufferType::Elements, elementOffset, size, elements.data());
+        m_pool.fillSection (BufferType::Elements, elementOffset, size, m_elements.data());
 
         // Update the mesh with the correct values.
-        m_meshTemplates[(unsigned int) mesh] = { 0, elementOffset, elements.size() };
+        m_meshTemplates[(unsigned int) mesh] = { 0, elementOffset, m_elements.size() };
         
         // Increment the sausage!
         elementOffset += size;
     };
-
+    
+    // We should just use the normal divisor for the dimensions.
+    const auto width = data.getDivisor(),
+               depth = data.getDivisor();
+    
+    // If we aren't segmenting then just load the top right corner template.
     if (data.getMeshTotal() > 1)
     {
-        // We should just use the normal divisor if no remainder exists.
-        const auto width      = data.getDivisor(),
-                   depth      = data.getDivisor();
+        createElements (MeshTemplate::Central, width, depth);
+        createElements (MeshTemplate::TopRow, width, depth);
+        createElements (MeshTemplate::RightColumn, width, depth);
+    }
     
-        // Load the element arrays into the GPU.
-        for (auto i = 0U; i < (unsigned int) MeshTemplate::Count; ++i)
-        {
-            createElements ((MeshTemplate) i, width, depth);
-        }
-    }
-
-    // If we aren't segmenting then just load the top right corner template.
-    else
-    {
-        createElements (MeshTemplate::TopRightCorner, data.getWidth(), data.getDepth());
-    }
+    // Do the top right corner last so we can cache the elements.
+    createElements (MeshTemplate::TopRightCorner, width, depth);
 }
 
 
@@ -501,121 +501,46 @@ void Terrain::applyNoise (std::vector<Vertex>& vertices, const NoiseArgs& normal
 
 void Terrain::calculateNormals (std::vector<Vertex>& vertices, const ConstructionData& data)
 {
-    /// This function makes use of the algorithm discussed here: http://www.emeyex.com/site/tuts/VertexNormals.pdf
-    const auto divisor = (int) data.getDivisor();
+    // Firstly we need to invalidate the normal of each vertex.
+    std::for_each (vertices.begin(), vertices.end(), [] (Vertex& vertex) { vertex.normal = glm::vec3 (0); });
 
-    // The max linked triangles to any vertex is 8.
-    const auto maxTriangles = 8,
-               linkedCount  = maxTriangles * 2;
-
-    // We're going to need a vector which stores the indices of the linked vertices. 
-    std::vector<int> linked { };
-    linked.reserve (linkedCount);
-
-    for (auto z = 0; z < divisor; ++z)
+    // We're going to loop through each triangle which means we must increment by three.
+    for (auto i = 0U; i < m_elements.size(); i += 3U)
     {
-        for (auto x = 0; z < divisor; ++z)
-        {
-            // Start afresh.
-            linked.clear();
-            
-            // We need to know the properties of the current vertex.
-            const auto  index    = x + z * divisor;
-            auto&       vertex   = vertices[index];
-            const auto& position = vertex.position;
+        // Obtain the element we'll be modifying since modifying a, b and c causes the top left and bottom right vertex to be ignored.
+        const auto indexA = m_elements[i],
+                   indexB = m_elements[i + 1],
+                   indexC = m_elements[i + 2];                   
 
-            // Fill the vector with linked elements.
-            determineLinkedVertices (linked, x, z, divisor);
+        // Obtain each vertex that makes up the triangle.
+        auto& a = vertices[indexA],
+              b = vertices[indexB],
+              c = vertices[indexC];
 
-            // We'll need to accumlate cross product of triangles which use the current vertex.
-            auto result = glm::vec3 (0);
+        // Calculate the distance from A to B and C, then cross product to give us a normal.
+        const auto aToB = b.position - a.position,
+                   aToC = c.position - a.position;
 
-            for (auto i = 0U; i < linked.size(); i += 2U)
-            {
-                // Get the distance between the current vertex and the linked vertices.
-                const auto aToB = vertices[linked[i]].position - position,
-                           aToC = vertices[linked[i + 1]].position - position;
+        // The cross product provides the basis of calculating a weighted normal.
+        const auto cross = glm::cross (aToB, aToC);
 
-                // The cross product of the two will provide the basis of calculating a weighted normal.
-                const auto cross = glm::cross (aToB, aToC);
-                
-                // Area == 1/2 * magnitude, multiply this by the direction of the cross product to get a weighted normal.
-                // This can be simplified to cross / 2.f;
-                result += (cross / 2.f);
-            }
+        // The area of a triangle is half the magnitude of the product, therefore halfing the cross product gives us a
+        // weighted value to compute the normal of each vertex with.
+        const auto normal = cross / 2.f;
 
-            // Normalise it to get a smoothed normal.
-            vertex.normal = glm::normalize (result);
-        }
-    }
-
-    assert (linked.capacity() == linkedCount);
-}
-
-
-void Terrain::determineLinkedVertices (std::vector<int>& linked, const int x, const int z, const int divisor)
-{
-    // Cache some constants we'll be using.
-    const int xLeft = x - 1, xRight = x + 1,
-              zDown = z - 1, zUp    = z + 1;
-    
-    // Neither the X or Y can be negative or larger than divisor-1 (array notation).
-    const auto isValid = [divisor] (const int x, const int z)
-    {
-        return x >= 0 && z >= 0 && x < divisor && z < divisor;
-    };
-
-    // Only add the two elements to the vector if they're both valid.
-    const auto addToVector = [&, divisor] (const int x1, const int z1, const int x2, const int z2)
-    {
-        if (isValid (x1, z1) && isValid (x2, z2))
-        {
-            linked.push_back (x1 + z1 * divisor);
-            linked.push_back (x2 + z2 * divisor);
-        }
-    };
-
-    // This will add the vertices required for triangles with eight potential links.
-    const auto eightLinks = [=, &addToVector] (const int x, const int z, const int divisor)
-    {
-        // \|/
-        // -V-  V = Current vertex, this is the shape of the patch to calculate.
-        // /|\
-
-        addToVector (xLeft,  zDown, x,      zDown);
-        addToVector (x,      zDown, xRight, zDown);
-        addToVector (xRight, zDown, xRight, z);
-        addToVector (xRight, z,     xRight, zUp);
-        addToVector (xRight, zUp,   x,      zUp);
-        addToVector (x,      zUp,   xLeft,  zUp);
-        addToVector (xLeft,  zUp,   xLeft,  z);
-        addToVector (xLeft,  z,     xLeft,  zDown);
-    };
-
-    // This will add the vertices required for triangles with four potential linkes.
-    const auto fourLinks = [=, &addToVector] (const int x, const int z, const int divisor)
-    {
-        // /|\
-        // -V-  V = Current vertex, this is the shape of the patch to calculate.
-        // \|/
+       
+        // The commented code below skips the bottom right and top left vertices, it actively doesn't change their values.
+        // Every other vertex has the normal added, but doing it cleanly as shown below doesn't. A compiler bug? 
         
-        addToVector (xLeft,  z,     x,      zDown);
-        addToVector (x,      zDown, xRight, z);
-        addToVector (xRight, z,     x,      zUp);
-        addToVector (x,      zUp,   xLeft,  z);
-    };
-
-    // Maybe four lambdas is over the top but none seem worth putting into some kind of utility.
-    switch ((x + z) % 2)
-    {
-        case 0:
-            eightLinks (x, z, divisor);
-            break;
-
-        case 1:
-            fourLinks (x, z, divisor);
-            break;
+        // a.normal += normal; b.normal += normal; c.normal += normal;
+        
+        vertices[indexA].normal = a.normal + normal;
+        vertices[indexB].normal = b.normal + normal;
+        vertices[indexC].normal = c.normal + normal;
     }
+
+    // Now we need to normalise each vertex which will give us precise values.
+    std::for_each (vertices.begin(), vertices.end(), [] (Vertex& vertex) { vertex.normal = glm::normalize (vertex.normal); });
 }
 
 

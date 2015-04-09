@@ -173,13 +173,6 @@ class Terrain final
         /// <param name="data"> The construction data used in the generation of terrain. </param>
         void calculateNormals (std::vector<Vertex>& vertices, const ConstructionData& data);
 
-        /// <summary> Fills the given vector with element values of triangles which the vertex at the given co-ordinates is linked to. </summary>
-        /// <param name="linked"> The vector to fill. Each triangle will add two elements. </param>
-        /// <param name="x"> The X co-ordinate of the vertex. </param>
-        /// <param name="z"> The Z co-ordinate of the vertex. </param>
-        /// <param name="divisor"> The max width/depth of the grid. </param>
-        void determineLinkedVertices (std::vector<int>& linked, const int x, const int z, const int divisor);
-
         /// <summary> Obtains the index of the template to use for a mesh with the given properties. </summary>
         /// <param name="isLastMeshX"> Is the mesh the last mesh on the X axis? </param>
         /// <param name="isLastMeshZ"> Is the mesh the last mesh on the Z axis? </param>
@@ -197,11 +190,12 @@ class Terrain final
         using MeshTemplates = std::array<Mesh, (size_t) MeshTemplate::Count>;
 
 
-        MeshPool            m_pool          { };        //!< A pool to store the entire generated terrain inside.
-        std::vector<Mesh>   m_patches       { };        //!< A collection of patches which make up the entire terrain.
-        MeshTemplates       m_meshTemplates { };        //!< Each Mesh has the element offset and count required for the four patch types.
+        MeshPool                    m_pool          { };        //!< A pool to store the entire generated terrain inside.
+        MeshTemplates               m_meshTemplates { };        //!< Each Mesh has the element offset and count required for the four patch types.
+        std::vector<Mesh>           m_patches       { };        //!< A collection of patches which make up the entire terrain.
+        std::vector<unsigned int>   m_elements      { };        //!< A copy 
 
-        unsigned int        m_divisor       { 256 };    //!< The maximum number of vertices wide/deep of each terrain patch.
+        unsigned int                m_divisor       { 256 };    //!< The maximum number of vertices wide/deep of each terrain patch.
 };
 
 #endif
