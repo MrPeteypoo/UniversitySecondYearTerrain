@@ -16,7 +16,6 @@
 #include <Terrain/TerrainConstructionData.hpp>
 #include <Utility/BezierSurface.hpp>
 #include <Utility/ElementCreation.hpp>
-#include <Utility/NoiseGenerator.hpp>
 
 
 
@@ -75,7 +74,8 @@ void Terrain::setDivisor (const unsigned int divisor)
 // Public interface //
 //////////////////////
 
-void Terrain::buildFromHeightMap (const HeightMap& heightMap, const unsigned int upscaledWidth, const unsigned int upscaledDepth)
+void Terrain::buildFromHeightMap (const HeightMap& heightMap, const NoiseArgs& normal, const NoiseArgs& height, 
+                                  const unsigned int upscaledWidth, const unsigned int upscaledDepth)
 {
     // Ensure we have a clean set of data to work with.
     cleanUp();
@@ -98,7 +98,7 @@ void Terrain::buildFromHeightMap (const HeightMap& heightMap, const unsigned int
     generateElements (data);
 
     // Generate the terrain!
-    generateVertices (heightMap, data);
+    generateVertices (heightMap, data, normal, height);
 }
 
 
@@ -336,7 +336,7 @@ void Terrain::addStitching (std::vector<unsigned int>& elements, const Construct
 // Vertices Creation //
 ///////////////////////
 
-void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionData& data)
+void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionData& data, const NoiseArgs& normal, const NoiseArgs& height)
 {
     // Cache some constants we'll be using.
     const auto divisor       = data.getDivisor();
@@ -383,7 +383,10 @@ void Terrain::generateVertices (const HeightMap& heightMap, const ConstructionDa
             }
 
             // Apply some beautiful noise to the terrain.
-            applyNoise (vertices, data);
+            applyNoise (vertices, normal, height);
+
+            // Recalculate the normals since we've ruined them with noise.
+            calculateNormals (vertices, data);
 
             // Add the data to the GPU.
             const auto verticesSize = vertices.size() * sizeof (Vertex);
@@ -461,26 +464,161 @@ void Terrain::addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap
 }
 
 
-void Terrain::applyNoise (std::vector<Vertex>& vertices, const ConstructionData& data)
+void Terrain::applyNoise (std::vector<Vertex>& vertices, const NoiseArgs& normal, const NoiseArgs& height)
 {
-    // Sample as necessary.
-    const auto samples    = 8U;
-    const auto frequency  = 1.f / (data.getWorldArea() / data.getVertexCount()),
-               gain       = 0.5f,
-               lacunarity = 2.1042f;
-
-    for (auto& vertex : vertices)
-    {
-        // Cache the position captain!
-        auto& position = vertex.position;
-
-        // Calculate some beautiful noise.
-        const auto noise = util::NoiseGenerator<float>::brownianMotion (position, samples, frequency, gain, lacunarity);
-                
-        // Move the vertex along its normal vector.
-        position += vertex.normal * noise;
-    }
+    // Check if we need to bother performing noise at all.
+    const bool applyNormalDisplacement = normal.samples > 0,
+               applyHeightDisplacement = height.samples > 0;
     
+    if (applyNormalDisplacement || applyHeightDisplacement)
+    {    
+        for (auto& vertex : vertices)
+        {
+            // Cache the position captain!
+            auto& position = vertex.position;
+
+            if (applyNormalDisplacement)
+            {
+                // Calculate some beautiful normal displacement.
+                const auto normalDisplacement = util::NoiseGenerator<float>::brownianMotion (position, normal);
+                
+                // Move the vertex along its normal vector.
+                position += vertex.normal * normalDisplacement;
+            }
+
+            if (applyHeightDisplacement)
+            {
+                // Calculate some beautiful normal displacement.
+                const auto heightDisplacement = util::NoiseGenerator<float>::brownianMotion (position, height);
+                
+                // Move the vertex along its normal vector.
+                position += glm::vec3 (0, heightDisplacement, 0);
+            }
+        }
+    }
+}
+
+
+void Terrain::calculateNormals (std::vector<Vertex>& vertices, const ConstructionData& data)
+{
+    /// This function makes use of the algorithm discussed here: http://www.emeyex.com/site/tuts/VertexNormals.pdf
+    const auto divisor = (int) data.getDivisor();
+
+    // The max linked triangles to any vertex is 8.
+    const auto maxTriangles = 8,
+               linkedCount  = maxTriangles * 2;
+
+    // We're going to need a vector which stores the indices of the linked vertices. 
+    std::vector<int> linked { };
+    linked.reserve (linkedCount);
+
+    for (auto z = 0; z < divisor; ++z)
+    {
+        for (auto x = 0; z < divisor; ++z)
+        {
+            // Start afresh.
+            linked.clear();
+            
+            // We need to know the properties of the current vertex.
+            const auto  index    = x + z * divisor;
+            auto&       vertex   = vertices[index];
+            const auto& position = vertex.position;
+
+            // Fill the vector with linked elements.
+            determineLinkedVertices (linked, x, z, divisor);
+
+            // We'll need to accumlate cross product of triangles which use the current vertex.
+            auto result = glm::vec3 (0);
+
+            for (auto i = 0U; i < linked.size(); i += 2U)
+            {
+                // Get the distance between the current vertex and the linked vertices.
+                const auto aToB = vertices[linked[i]].position - position,
+                           aToC = vertices[linked[i + 1]].position - position;
+
+                // The cross product of the two will provide the basis of calculating a weighted normal.
+                const auto cross = glm::cross (aToB, aToC);
+
+                // The magnitude provides a means of calculating the area of the triangle and normalising the vector.
+                const auto magnitude = glm::length (cross);
+                
+                // Area == 1/2 * magnitude, multiply this by the normal of the cross product to get a weighted normal.
+                result += (magnitude / 2) * 
+                          (cross / magnitude);
+            }
+
+            // Normalise it to get a smoothed normal.
+            vertex.normal = glm::normalize (result);
+        }
+    }
+
+    assert (linked.capacity() == linkedCount);
+}
+
+
+void Terrain::determineLinkedVertices (std::vector<int>& linked, const int x, const int z, const int divisor)
+{
+    // Cache some constants we'll be using.
+    const int xLeft = x - 1, xRight = x + 1,
+              zDown = z - 1, zUp    = z + 1;
+    
+    // Neither the X or Y can be negative or larger than divisor-1 (array notation).
+    const auto isValid = [divisor] (const int x, const int z)
+    {
+        return x >= 0 && z >= 0 && x < divisor && z < divisor;
+    };
+
+    // Only add the two elements to the vector if they're both valid.
+    const auto addToVector = [&, divisor] (const int x1, const int z1, const int x2, const int z2)
+    {
+        if (isValid (x1, z1) && isValid (x2, z2))
+        {
+            linked.push_back (x1 + z1 * divisor);
+            linked.push_back (x2 + z2 * divisor);
+        }
+    };
+
+    // This will add the vertices required for triangles with eight potential links.
+    const auto eightLinks = [=, &addToVector] (const int x, const int z, const int divisor)
+    {
+        // \|/
+        // -V-  V = Current vertex, this is the shape of the patch to calculate.
+        // /|\
+
+        addToVector (xLeft,  zDown, x,      zDown);
+        addToVector (x,      zDown, xRight, zDown);
+        addToVector (xRight, zDown, xRight, z);
+        addToVector (xRight, z,     xRight, zUp);
+        addToVector (xRight, zUp,   x,      zUp);
+        addToVector (x,      zUp,   xLeft,  zUp);
+        addToVector (xLeft,  zUp,   xLeft,  z);
+        addToVector (xLeft,  z,     xLeft,  zDown);
+    };
+
+    // This will add the vertices required for triangles with four potential linkes.
+    const auto fourLinks = [=, &addToVector] (const int x, const int z, const int divisor)
+    {
+        // /|\
+        // -V-  V = Current vertex, this is the shape of the patch to calculate.
+        // \|/
+        
+        addToVector (xLeft,  z,     x,      zDown);
+        addToVector (x,      zDown, xRight, z);
+        addToVector (xRight, z,     x,      zUp);
+        addToVector (x,      zUp,   xLeft,  z);
+    };
+
+    // Maybe four lambdas is over the top but none seem worth putting into some kind of utility.
+    switch ((x + z) % 2)
+    {
+        case 0:
+            eightLinks (x, z, divisor);
+            break;
+
+        case 1:
+            fourLinks (x, z, divisor);
+            break;
+    }
 }
 
 

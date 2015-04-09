@@ -16,17 +16,42 @@ namespace util
     {
         public:
 
+            /// <summary> 
+            /// A struct containing the parameters which effect the generated noise.
+            /// </summary>
+            struct Parameters final
+            {
+                unsigned int samples    = 8U;       //!< Also known as octaves, the number of layers which make up the final noise value.
+                T            frequency  = (T) 0.03; //!< The higher the frequency the smaller details become.
+                T            lacunarity = (T) 2;    //!< Scales the frequency every sample, commonly 2.
+                T            gain       = (T) 0.5;  //!< Effects how tall or short things can become when noise is applied.
+                T            scalar     = (T) 1;    //!< How much the resulting noise should be scaled.
+
+                /// <summary> Constructs a Parameters object with low frequency noise values. </summary>
+                Parameters() = default;
+
+                /// <summary> Constructs a Parameters object. </summary>
+                /// <param name="samp"> Also known as octaves, the number of layers which make up the final noise value. </param>
+                /// <param name="freq"> The higher the frequency the smaller details become. </param>
+                /// <param name="lac"> Scales the frequency every sample, commonly 2. </param>
+                /// <param name="gain"> Effects how tall or short things can become when noise is applied. </param>
+                /// <param name="scalar"> How much the resulting noise should be scaled. </param>
+                Parameters (const unsigned int samp, const T freq, const T lac, const T gain, const T scale)
+                    : samples (samp), frequency (freq), lacunarity (lac), gain (gain), scalar (scale) { }
+            };
+
             /// <summary>
             /// Creates a smoother, more natural noise according to the values given.
             /// </summary>
             /// <param name="position"> A position vector containing an X, Y and Z co-ordinate. </param>
-            /// <param name="samples"> Also known as octaves, the number of layers which make up the final noise value. </param>
-            /// <param name="frequency"> The higher the frequency the smaller details become. </param>
-            /// <param name="gain"> Effects how tall or short things can become when noise is applied. </param>
-            /// <param name="lacunarity"> Scales the frequency every sample, commonly 2. </param>
+            /// <param name="parameters"> The parameters to use for the noise generation. </param>
             /// <returns> A detailed noise value ready to be applied. </returns>
-            template <typename U> static T brownianMotion (const U& position, const unsigned int samples, 
-                                                           const T frequency, const T gain, const T lacunarity);
+            template <typename U> static T brownianMotion (const U& position, const Parameters& parameters);
+
+            /// <summary> Calculates a noise value according to the initial values given. </summary>
+            /// <param name="position"> A vector containing X, Y and Z co-ordinates. </param>
+            /// <returns> A noise scalar from -1 to 1. </returns>
+            template <typename U> inline static T perlinNoise (const U& position);
             
             /// <summary>
             /// Calculates a noise value according to the initial values given.
@@ -37,45 +62,51 @@ namespace util
             /// <returns> A noise scalar from -1 to 1. If all parameters are integers then it will return 0. </returns>
             static T perlinNoise (const T initialX, const T initialY, const T initialZ);
 
-            /// <summary> Calculates a noise value according to the initial values given. </summary>
-            /// <param name="position"> A vector containing X, Y and Z co-ordinates. </param>
-            /// <returns> A noise scalar from -1 to 1. </returns>
-            template <typename U> inline static T perlinNoise (const U& position);
-
         private:
 
-            static T fade (const T t);
-            static T grad (const int hash, const T x, const T y, const T z);
-            
+            inline static T fade (const T t);
             inline static T lerp (const T t, const T a, const T b);
 
-            static const int p[512];    //!< The permutations array which causes the pseudo-random values.
+            static T grad (const int hash, const T x, const T y, const T z);
+            
+            static const int p[512];    //!< The permutations array which creates the pseudo-random values.
     };
+
+
+    // Aliases bro!
+    template <typename T> using NoiseArgs = typename NoiseGenerator<T>::Parameters;
 
 
     template <typename T>
     template <typename U>
-    T NoiseGenerator<T>::brownianMotion (const U& position, const unsigned int samples, 
-                                         const T frequency, const T gain, const T lacunartiy)
+    T NoiseGenerator<T>::brownianMotion (const U& position, const Parameters& parameters)
     {
         // Set the amplitude to the gain which will increase every sample.
-        T amp  = gain,
-          freq = frequency;
+        T amp  = parameters.gain,
+          freq = parameters.frequency;
         
         // We need to keep track of the result.
         T result = (T) 0;
 
-        for (auto i = 0U; i < samples; ++i)
+        for (auto i = 0U; i < parameters.samples; ++i)
         {
             // Create the multi-layered effect by contorting the noise values.
             result += amp * perlinNoise (position * freq);
 
             // Increase the amplitude and frequency for the next octave.
-            amp  *= gain;
-            freq *= lacunartiy;
+            amp  *= parameters.gain;
+            freq *= parameters.lacunarity;
         }
 
-        return result;
+        return result * parameters.scalar;
+    }
+
+    
+    template <typename T>
+    template <typename U>
+    T NoiseGenerator<T>::perlinNoise (const U& position)
+    {
+        return perlinNoise (position.x, position.y, position.z);   
     }
 
 
@@ -108,14 +139,6 @@ namespace util
                                        grad(p[BA+1], x-1, y  , z-1 )), // OF CUBE
                                lerp(u, grad(p[AB+1], x  , y-1, z-1 ),
                                        grad(p[BB+1], x-1, y-1, z-1 ))));
-    }
-
-    
-    template <typename T>
-    template <typename U>
-    T NoiseGenerator<T>::perlinNoise (const U& position)
-    {
-        return perlinNoise (position.x, position.y, position.z);   
     }
 
 

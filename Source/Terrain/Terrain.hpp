@@ -10,11 +10,14 @@
 // Personal headers.
 #include <Renderer/Mesh.hpp>
 #include <Renderer/MeshPool.hpp>
+#include <Utility/NoiseGenerator.hpp>
 
 
-// Forward decalarations.
+// Forward decalarations & aliases.
 class HeightMap;
 struct Vertex;
+
+using NoiseArgs = util::NoiseArgs<float>;
 
 
 /// <summary>
@@ -56,10 +59,13 @@ class Terrain final
 
         /// <summary> Attempt to build the terrain from a given height map. </summary>
         /// <param name="heightMap"> The height map data to load from. </param>
+        /// <param name="normal"> The noise parameters to be applied during normal displacement. </param>
+        /// <param name="height"> The noise parameters to be applied during height displacement. </param>
         /// <param name="upscaledWidth"> How many vertices wide the final terrain should be, leave this at 0 to avoid upscaling the width. </param>
         /// <param name="upscaledDepth"> How many vertices deep the final terrain should be, leave this at 0 to avoid upscaling the depth. </param>
         /// <returns> Whether the terrain was successfully built. </returns>
-        void buildFromHeightMap (const HeightMap& heightMap, const unsigned int upscaledWidth = 0, const unsigned int upscaledDepth = 0);
+        void buildFromHeightMap (const HeightMap& heightMap, const NoiseArgs& normal, const NoiseArgs& height,
+                                 const unsigned int width = 0, const unsigned int depth = 0);
 
         /// <summary> Delete any allocated memory. </summary>
         void cleanUp();
@@ -146,8 +152,9 @@ class Terrain final
         /// <summary> Generates the vertices of the terrain from a height map. </summary>
         /// <param name="heightMap"> The height map containing necessary data for the terrain generation. </param>
         /// <param name="data"> The data required to construct the terrain to specific dimensions. </param>
-        void generateVertices (const HeightMap& heightMap, const ConstructionData& data);
-
+        /// <param name="normal"> The noise parameters to be applied during normal displacement. </param>
+        /// <param name="height"> The noise parameters to be applied during height displacement. </param>
+        void generateVertices (const HeightMap& heightMap, const ConstructionData& data, const NoiseArgs& normal, const NoiseArgs& height);
         
         /// <summary> Adds a calculated vertex to the given vector from the U and V values passed. </summary>
         /// <param name="vector"> The vector to contain the new Vertex. </param>
@@ -157,9 +164,21 @@ class Terrain final
         void addVertex (std::vector<Vertex>& vector, const HeightMap& heightMap, const float u, const float v);
 
         /// <summary> Appies Fractional Brownian Motion to the given vertices, moving them along their normal vector. </summary>
-        /// <param name="vertices"> The vertices to modify. </param>
-        /// <param name="data"> The construction data required to calculate noise modifiers. </param>
-        void applyNoise (std::vector<Vertex>& vertices, const ConstructionData& data);
+        /// <param name="normal"> The normal displacement parameters to be applied first. </param>
+        /// <param name="height"> The parameters for height displacement which happens after normal displacement. </param>
+        void applyNoise (std::vector<Vertex>& vertices, const NoiseArgs& normal, const NoiseArgs& height);
+
+        /// <summary> Calculates the normal vector for each vertex. </summary>
+        /// <param name="vertices"> The vector of vertices to calculate normals for. </param>
+        /// <param name="data"> The construction data used in the generation of terrain. </param>
+        void calculateNormals (std::vector<Vertex>& vertices, const ConstructionData& data);
+
+        /// <summary> Fills the given vector with element values of triangles which the vertex at the given co-ordinates is linked to. </summary>
+        /// <param name="linked"> The vector to fill. Each triangle will add two elements. </param>
+        /// <param name="x"> The X co-ordinate of the vertex. </param>
+        /// <param name="z"> The Z co-ordinate of the vertex. </param>
+        /// <param name="divisor"> The max width/depth of the grid. </param>
+        void determineLinkedVertices (std::vector<int>& linked, const int x, const int z, const int divisor);
 
         /// <summary> Obtains the index of the template to use for a mesh with the given properties. </summary>
         /// <param name="isLastMeshX"> Is the mesh the last mesh on the X axis? </param>
