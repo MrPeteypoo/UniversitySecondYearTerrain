@@ -513,9 +513,9 @@ void Terrain::calculateNormals (std::vector<Vertex>& vertices, const Constructio
                    indexC = m_elements[i + 2];                   
 
         // Obtain each vertex that makes up the triangle.
-        auto& a = vertices[indexA],
-              b = vertices[indexB],
-              c = vertices[indexC];
+        auto& a = vertices[indexA];
+        auto& b = vertices[indexB];
+        auto& c = vertices[indexC];
 
         // Calculate the distance from A to B and C, then cross product to give us a normal.
         const auto aToB = b.position - a.position,
@@ -528,15 +528,10 @@ void Terrain::calculateNormals (std::vector<Vertex>& vertices, const Constructio
         // weighted value to compute the normal of each vertex with.
         const auto normal = cross / 2.f;
 
-       
-        // The commented code below skips the bottom right and top left vertices, it actively doesn't change their values.
-        // Every other vertex has the normal added, but doing it cleanly as shown below doesn't. A compiler bug? 
-        
-        // a.normal += normal; b.normal += normal; c.normal += normal;
-        
-        vertices[indexA].normal = a.normal + normal;
-        vertices[indexB].normal = b.normal + normal;
-        vertices[indexC].normal = c.normal + normal;
+        // Update the normals.
+        a.normal += normal; 
+        b.normal += normal; 
+        c.normal += normal;
     }
 
     // Now we need to normalise each vertex which will give us precise values.
