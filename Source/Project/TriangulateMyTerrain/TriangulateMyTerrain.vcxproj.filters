@@ -13,20 +13,15 @@
     <Filter Include="External">
       <UniqueIdentifier>{c3c0dcf7-d204-4ca3-9adb-b94d6ad90237}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\Builds\shapes_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\Builds\shapes_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\Builds\terrain_fs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="..\..\..\Builds\terrain_vs.glsl">
-      <Filter>Shaders</Filter>
-    </None>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{0f9fc0c7-5bce-4e6a-bf7f-5b9bac564cc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{b5a8c4a1-1664-426d-bd8f-52d321dcc0b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Terrain">
+      <UniqueIdentifier>{fa4bb439-d84c-4008-a426-095d798093a5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Framework\MyController.cpp">
@@ -51,6 +46,31 @@
       <Filter>External</Filter>
     </ClCompile>
     <ClCompile Include="..\..\main.cpp" />
+    <ClCompile Include="..\..\Renderer\Mesh.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Renderer\MeshPool.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\PoolSegment.cpp" />
+    <ClCompile Include="..\..\Terrain\HeightMap.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Terrain\Terrain.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Renderer\Vertex.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Utility\ElementCreation.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Utility\BezierSurface.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Framework\MyController.hpp">
@@ -68,5 +88,56 @@
     <ClInclude Include="..\..\..\External\include\SceneModel\Context.hpp">
       <Filter>External</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Renderer\MeshPool.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\Mesh.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\Rectangle.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Terrain\HeightMap.hpp">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PoolSegment.hpp" />
+    <ClInclude Include="..\..\Terrain\Terrain.hpp">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Renderer\Vertex.hpp">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\ElementCreation.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\CubicBezier.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\QuadraticBezier.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\BezierSurface.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Utility\NoiseGenerator.hpp">
+      <Filter>Utility</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Demo\shapes_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Demo\shapes_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Demo\terrain_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="..\..\..\Demo\terrain_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

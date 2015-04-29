@@ -87,7 +87,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)../../External/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)../../External/include;$(SolutionDir)../</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -107,12 +107,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\..\..\Builds\shapes_fs.glsl" />
-    <None Include="..\..\..\Builds\shapes_vs.glsl" />
-    <None Include="..\..\..\Builds\terrain_fs.glsl" />
-    <None Include="..\..\..\Builds\terrain_vs.glsl" />
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="..\..\..\External\src\SceneModel\Camera.cpp" />
     <ClCompile Include="..\..\..\External\src\SceneModel\Context.cpp" />
     <ClCompile Include="..\..\..\External\src\tgl\tgl.c" />
@@ -120,14 +114,42 @@
     <ClCompile Include="..\..\..\External\src\tygra\Window.cpp" />
     <ClCompile Include="..\..\main.cpp" />
     <ClCompile Include="..\..\Framework\MyController.cpp" />
+    <ClCompile Include="..\..\Renderer\Mesh.cpp" />
+    <ClCompile Include="..\..\Renderer\MeshPool.cpp" />
     <ClCompile Include="..\..\Renderer\MyView.cpp" />
+    <ClCompile Include="..\..\PoolSegment.cpp" />
+    <ClCompile Include="..\..\Renderer\Vertex.cpp" />
+    <ClCompile Include="..\..\Terrain\HeightMap.cpp" />
+    <ClCompile Include="..\..\Terrain\Terrain.cpp" />
+    <ClCompile Include="..\..\Terrain\TerrainConstructionData.cpp" />
+    <ClCompile Include="..\..\Utility\BezierSurface.cpp" />
+    <ClCompile Include="..\..\Utility\ElementCreation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\External\include\SceneModel\Camera.hpp" />
     <ClInclude Include="..\..\..\External\include\SceneModel\Context.hpp" />
     <ClInclude Include="..\..\..\External\src\SceneModel\FirstPersonMovement.hpp" />
     <ClInclude Include="..\..\Framework\MyController.hpp" />
+    <ClInclude Include="..\..\Renderer\Vertex.hpp" />
+    <ClInclude Include="..\..\Terrain\HeightMap.hpp" />
+    <ClInclude Include="..\..\Terrain\Terrain.hpp" />
+    <ClInclude Include="..\..\Terrain\TerrainConstructionData.hpp" />
+    <ClInclude Include="..\..\Utility\CubicBezier.hpp" />
+    <ClInclude Include="..\..\Utility\BezierSurface.hpp" />
+    <ClInclude Include="..\..\Utility\ElementCreation.hpp" />
+    <ClInclude Include="..\..\Utility\NoiseGenerator.hpp" />
+    <ClInclude Include="..\..\Utility\QuadraticBezier.hpp" />
+    <ClInclude Include="..\..\Utility\Rectangle.hpp" />
+    <ClInclude Include="..\..\Renderer\Mesh.hpp" />
+    <ClInclude Include="..\..\Renderer\MeshPool.hpp" />
     <ClInclude Include="..\..\Renderer\MyView.hpp" />
+    <ClInclude Include="..\..\PoolSegment.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Demo\shapes_fs.glsl" />
+    <None Include="..\..\..\Demo\shapes_vs.glsl" />
+    <None Include="..\..\..\Demo\terrain_fs.glsl" />
+    <None Include="..\..\..\Demo\terrain_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

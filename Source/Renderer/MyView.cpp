@@ -11,6 +11,7 @@
 #include <tygra/FileHelper.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <Terrain/HeightMap.hpp>
 
 
 // Constants.
@@ -45,48 +46,11 @@ MyView& MyView::operator= (MyView&& move)
 
 void MyView::windowViewWillStart (std::shared_ptr<tygra::Window> window)
 {
+    // Let the framework do it's business, it isn't relevant to us.
     frameworkLoading();
 
-    // Generate the terrain and prepare static batching.
-    const float sizeX = m_scene->getTerrainSizeX();
-    const float sizeY = m_scene->getTerrainSizeY();
-    const float sizeZ = m_scene->getTerrainSizeZ();
-
-    tygra::Image height_image = tygra::imageFromPNG(m_scene->getTerrainHeightMapName());
-
-	// below is an example of reading the red component of pixel(x,y) as a byte [0,255]
-	//uint8_t height = *(uint8_t*)height_image(x, y);
-
-    // below is indicative code for initialising a terrain VAO
-
-    //const int vertex_count = mesh.GetVertexCount();
-    //const int element_count = mesh.GetElementCount();
-    //const auto& elements = mesh.GetElementArray();
-    //const auto& positions = mesh.GetPositionArray();
-
-    //glGenBuffers(1, &m_terrainMesh.element_vbo);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_terrainMesh.element_vbo);
-    //glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-    //    elements.size() * sizeof(unsigned int),
-    //    elements.data(), GL_STATIC_DRAW);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    //m_terrainMesh.element_count = elements.size();
-
-    //glGenBuffers(1, &m_terrainMesh.position_vbo);
-    //glBindBuffer(GL_ARRAY_BUFFER, m_terrainMesh.position_vbo);
-    //glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3),
-    //             positions.data(), GL_STATIC_DRAW);
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    //glGenVertexArrays(1, &m_terrainMesh.vao);
-    //glBindVertexArray(m_terrainMesh.vao);
-    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_terrainMesh.element_vbo);
-    //glBindBuffer(GL_ARRAY_BUFFER, m_terrainMesh.position_vbo);
-    //glEnableVertexAttribArray(kVertexPosition);
-    //glVertexAttribPointer(kVertexPosition, 3, GL_FLOAT, GL_FALSE,
-    //                      sizeof(glm::vec3), TGL_BUFFER_OFFSET(0));
-    //glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //glBindVertexArray(0);
+    // Generate the terrain.
+    terrainLoading();
 }
 
 
@@ -200,6 +164,41 @@ void MyView::frameworkLoading()
 }
 
 
+void MyView::terrainLoading()
+{
+    // Obtain the terrain properties from the scene information and generate the terrain.
+    const auto& file   = m_scene->getTerrainHeightMapName();
+    
+    const auto  width  = m_scene->getTerrainSizeX(),
+                height = m_scene->getTerrainSizeY(),    
+                depth  = m_scene->getTerrainSizeZ();
+
+    // Use this to control the scale of the terrain. Shrink can be set to 1 which will produce an 8Kx8K grid,
+    // this will work perfectly but the frame rate will be too low due to lack of frustum culling.
+    const auto  shrink       = 2U,
+                terrainWidth = (unsigned int) width / shrink,
+                terrainDepth = (unsigned int) depth / shrink;
+
+    // Construct the terrain scalar to get the correct visual output.
+    const auto scale = glm::vec3 (width, height, -depth);
+
+    // Load the height map with the desired values.
+    const HeightMap heightMap { file, scale };
+
+    // Time for some noise. We'll use the industry standard 1/f noise with 2 lacunarity.
+    const auto lacunarity  = 2.f,
+               gain        = 1 / lacunarity;
+        
+    // Use some normal and height displacement values which make the terrain look nice.
+    const auto normalNoise = NoiseArgs (8U, 0.5f, lacunarity, gain, scale.y * 0.0005f),
+               heightNoise = NoiseArgs (2U, 0.025f, lacunarity, gain, scale.y * 0.0087f);
+
+    // Build the terrain and get it ready for rendering.
+    m_terrain.buildFromHeightMap (heightMap, normalNoise, heightNoise, terrainWidth, terrainDepth);
+    m_terrain.prepareForRender (m_terrainShader);
+}
+
+
 //////////////
 // Clean up //
 //////////////
@@ -209,9 +208,10 @@ void MyView::windowViewDidStop (std::shared_ptr<tygra::Window> window)
     glDeleteProgram (m_terrainShader);
     glDeleteProgram (m_shapesShader);
 
-    glDeleteBuffers (1, &m_terrainMesh.position_vbo);
-    glDeleteBuffers (1, &m_terrainMesh.element_vbo);
-    glDeleteVertexArrays (1, &m_terrainMesh.vao);
+    glDeleteBuffers (1, &m_cubeVBO);
+    glDeleteVertexArrays (1, &m_cubeVAO);
+
+    m_terrain.cleanUp();
 }
 
 
@@ -269,8 +269,9 @@ void MyView::windowViewRender (std::shared_ptr<tygra::Window> window)
     glUniformMatrix4fv(view_world_xform_id, 1, GL_FALSE,
                        glm::value_ptr(view_world_xform));
 
-    glBindVertexArray(m_terrainMesh.vao);
-    glDrawElements(GL_TRIANGLES, m_terrainMesh.element_count, GL_UNSIGNED_INT, 0);
+    m_terrain.draw();
+    //glBindVertexArray(m_terrainMesh.vao);
+    //glDrawElements(GL_TRIANGLES, m_terrainMesh.element_count, GL_UNSIGNED_INT, 0);
 
 
     glEnable(GL_DEPTH_TEST);

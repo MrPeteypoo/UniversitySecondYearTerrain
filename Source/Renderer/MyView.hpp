@@ -1,11 +1,16 @@
-#pragma once
+#ifndef MY_VIEW_GL_HPP
+#define MY_VIEW_GL_HPP
 
 
+// Engine headers.
 #include <SceneModel/Context.hpp>
 #include <tygra/WindowViewDelegate.hpp>
 #include <tgl/tgl.h>
 #include <glm/glm.hpp>
 
+
+// Personal headers.
+#include <Terrain/Terrain.hpp>
 
 
 /// <summary>
@@ -14,6 +19,10 @@
 class MyView final : public tygra::WindowViewDelegate
 {
     public:
+        
+        // Constants.
+        const int shadingModesAvailable = 3;
+
 
         /////////////////////////////////
         // Constructors and destructor //
@@ -41,7 +50,7 @@ class MyView final : public tygra::WindowViewDelegate
         /// Toggle the shading model used by the application, this will determine whether to shade the
         /// terrain using the normal vectors.
         /// </summary>
-        void toggleShading() { m_shadeNormals = !m_shadeNormals; }
+        void toggleShading() { m_shadeNormals = ++m_shadeNormals % shadingModesAvailable; }
 
     private:
 
@@ -54,6 +63,9 @@ class MyView final : public tygra::WindowViewDelegate
 
         /// <summary> This contains all of the framework-specific loading code. </summary>
         void frameworkLoading();
+
+        /// <summary> Attempt to load the terrain from a height map. </summary>
+        void terrainLoading();
 
 
         //////////////
@@ -79,24 +91,18 @@ class MyView final : public tygra::WindowViewDelegate
         // Internal data //
         ///////////////////
 
-        struct MeshGL
-        {
-            GLuint position_vbo{ 0 };
-            GLuint element_vbo{ 0 };
-            GLuint vao{ 0 };
-            int element_count{ 0 };
-        };
-
         GLuint                                      m_terrainShader { 0 };          //!< The shader program used for drawing the terrain.
         GLuint                                      m_shapesShader  { 0 };          //!< The shader program used for drawing the static cubes.
         
-        MeshGL                                      m_terrainMesh   { };            //!< The mesh containing information required to draw the terrain.
+        Terrain                                     m_terrain       { };            //!< The mesh containing information required to draw the terrain.
 
 	    GLuint                                      m_cubeVAO       { 0 };          //!< The ID of the VAO containing information relating to the drawing of a cube.
 	    GLuint                                      m_cubeVBO       { 0 };          //!< The ID of the VBO containing the vertices of a cube.
 
-        bool                                        m_shadeNormals  { false };      //!< Determines whether the terrain should be shaded using its normal vector.
+        int                                         m_shadeNormals  { 0 };          //!< Determines whether the terrain should be shaded in white or in pastel with its normal vector.
         
         std::shared_ptr<const SceneModel::Context>  m_scene         { nullptr };    //!< A poiner to the context used for camera information when rendering the scene.
 
 };
+
+#endif
