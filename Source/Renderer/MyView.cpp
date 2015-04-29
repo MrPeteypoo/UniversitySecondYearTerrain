@@ -173,7 +173,8 @@ void MyView::terrainLoading()
                 height = m_scene->getTerrainSizeY(),    
                 depth  = m_scene->getTerrainSizeZ();
 
-    // Use this to control the scale of the terrain.
+    // Use this to control the scale of the terrain. Shrink can be set to 1 which will produce an 8Kx8K grid,
+    // this will work perfectly but the frame rate will be too low due to lack of frustum culling.
     const auto  shrink       = 2U,
                 terrainWidth = (unsigned int) width / shrink,
                 terrainDepth = (unsigned int) depth / shrink;
@@ -182,15 +183,15 @@ void MyView::terrainLoading()
     const auto scale = glm::vec3 (width, height, -depth);
 
     // Load the height map with the desired values.
-    const HeightMap heightMap { file, scale / (float) shrink };
+    const HeightMap heightMap { file, scale };
 
     // Time for some noise. We'll use the industry standard 1/f noise with 2 lacunarity.
     const auto lacunarity  = 2.f,
                gain        = 1 / lacunarity;
         
     // Use some normal and height displacement values which make the terrain look nice.
-    const auto normalNoise = NoiseArgs (8U, 0.5f, lacunarity, gain, scale.y * 0.001f),
-               heightNoise = NoiseArgs (2U, 0.025f, lacunarity, gain, scale.y * 0.0175f);
+    const auto normalNoise = NoiseArgs (8U, 0.5f, lacunarity, gain, scale.y * 0.0005f),
+               heightNoise = NoiseArgs (2U, 0.025f, lacunarity, gain, scale.y * 0.0087f);
 
     // Build the terrain and get it ready for rendering.
     m_terrain.buildFromHeightMap (heightMap, normalNoise, heightNoise, terrainWidth, terrainDepth);
@@ -286,7 +287,7 @@ void MyView::windowViewRender (std::shared_ptr<tygra::Window> window)
 
     glBindVertexArray(m_cubeVAO);
 
-    /*for (const auto& pos : m_scene->getAllShapePositions())
+    for (const auto& pos : m_scene->getAllShapePositions())
     {
         world_xform = glm::translate(glm::mat4(1), glm::vec3(pos.x, 64, -pos.y));
         view_world_xform = view_xform * world_xform;
@@ -297,5 +298,5 @@ void MyView::windowViewRender (std::shared_ptr<tygra::Window> window)
                            glm::value_ptr(view_world_xform));
 
         glDrawArrays(GL_TRIANGLES, 0, 36);
-    }*/
+    }
 }

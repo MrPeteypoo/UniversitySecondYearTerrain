@@ -184,3 +184,5 @@ FakesAssemblies/
 External/
 Builds/*/
 Temp/
+Docs/
+Demo/*.exe
